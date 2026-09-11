@@ -5,8 +5,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using System.Runtime.InteropServices;
-using System.Windows.Interop;
 using Codenotch.App.Controls;
 using Codenotch.Core.Models;
 using Codenotch.Core.Services;
@@ -84,7 +82,6 @@ public partial class NotchWindow : Window
                 AnimateExpansion(true);
         };
 
-        SourceInitialized += (_, _) => ApplyAcrylicBackdrop();
     }
 
     private void NotchWindow_Loaded(object sender, RoutedEventArgs e)
@@ -256,67 +253,6 @@ public partial class NotchWindow : Window
         }
 
     }
-
-    private void ApplyAcrylicBackdrop()
-    {
-        if (!OperatingSystem.IsWindows()) return;
-
-        var hwnd = new WindowInteropHelper(this).Handle;
-        var accent = new AccentPolicy
-        {
-            AccentState = AccentState.EnableAcrylicBlurBehind,
-            AccentFlags = 2,
-            GradientColor = unchecked((int)0xD91B1B1F)
-        };
-        var size = Marshal.SizeOf(accent);
-        var ptr = Marshal.AllocHGlobal(size);
-        try
-        {
-            Marshal.StructureToPtr(accent, ptr, false);
-            var data = new WindowCompositionAttributeData
-            {
-                Attribute = WindowCompositionAttribute.WcaAccentPolicy,
-                Data = ptr,
-                SizeOfData = size
-            };
-            SetWindowCompositionAttribute(hwnd, ref data);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(ptr);
-        }
-    }
-
-    private enum AccentState
-    {
-        Disabled = 0,
-        EnableAcrylicBlurBehind = 4
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct AccentPolicy
-    {
-        public AccentState AccentState;
-        public int AccentFlags;
-        public int GradientColor;
-        public int AnimationId;
-    }
-
-    private enum WindowCompositionAttribute
-    {
-        WcaAccentPolicy = 19
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct WindowCompositionAttributeData
-    {
-        public WindowCompositionAttribute Attribute;
-        public IntPtr Data;
-        public int SizeOfData;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
     private void OnUsageUpdated(IReadOnlyList<UsageRecord> records)
     {

@@ -34,7 +34,7 @@
         <Border x:Name="NotchBody" Background="#E61B1B1F" BorderBrush="#42FFFFFF" BorderThickness="1,1,0,1"
                 CornerRadius="16,0,0,16" SnapsToDevicePixels="True" Cursor="SizeNS">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="18" Color="#000000" Opacity="0.42" ShadowDepth="5" Direction="180" />
+                <DropShadowEffect BlurRadius="10" Color="#000000" Opacity="0.22" ShadowDepth="2" Direction="180" />
             </Border.Effect>
 
             <Grid>
