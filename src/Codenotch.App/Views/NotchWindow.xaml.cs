@@ -84,17 +84,12 @@ public partial class NotchWindow : Window
                 AnimateExpansion(true);
         };
 
-        SourceInitialized += (_, _) =>
-        {
-            ApplyAcrylicBackdrop();
-            UpdateWindowRegion();
-        };
+        SourceInitialized += (_, _) => ApplyAcrylicBackdrop();
     }
 
     private void NotchWindow_Loaded(object sender, RoutedEventArgs e)
     {
         PositionAtRightEdge();
-        UpdateWindowRegion();
     }
 
     public void PositionAtRightEdge(double targetWidth = CompactWidth)
@@ -203,7 +198,6 @@ public partial class NotchWindow : Window
             Width = targetWidth;
             Height = targetHeight;
             Left = targetLeft;
-            UpdateWindowRegion();
 
             ExpandedContent.Visibility = Visibility.Visible;
             ExpandedContent.Opacity = 0;
@@ -250,7 +244,6 @@ public partial class NotchWindow : Window
                     Width = CompactWidth;
                     Height = CompactHeight;
                     Left = workArea.Right - CompactWidth;
-                    UpdateWindowRegion();
                     ExpandedContent.Opacity = 0;
                     ExpandedScale.ScaleX = 0.96;
                     ExpandedScale.ScaleY = 0.96;
@@ -294,24 +287,6 @@ public partial class NotchWindow : Window
         }
     }
 
-    private void UpdateWindowRegion()
-    {
-        if (!IsLoaded) return;
-
-        var hwnd = new WindowInteropHelper(this).Handle;
-        if (hwnd == IntPtr.Zero) return;
-
-        // AllowsTransparency keeps the WPF content transparent, but the HWND
-        // itself is still rectangular. Restrict the native region so acrylic,
-        // shadows and hit testing cannot cover the transparent safety corners.
-        var width = Math.Max(1, (int)Math.Ceiling(ActualWidth > 0 ? ActualWidth : Width));
-        var height = Math.Max(1, (int)Math.Ceiling(ActualHeight > 0 ? ActualHeight : Height));
-        var radius = Math.Min(32, Math.Min(width, height));
-        var region = CreateRoundRectRgn(0, 0, width + 1, height + 1, radius, radius);
-        if (region != IntPtr.Zero && SetWindowRgn(hwnd, region, true) == 0)
-            DeleteObject(region);
-    }
-
     private enum AccentState
     {
         Disabled = 0,
@@ -342,15 +317,6 @@ public partial class NotchWindow : Window
 
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
-
-    [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateRoundRectRgn(int left, int top, int right, int bottom, int width, int height);
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowRgn(IntPtr hwnd, IntPtr region, bool redraw);
-
-    [DllImport("gdi32.dll")]
-    private static extern bool DeleteObject(IntPtr handle);
 
     private void OnUsageUpdated(IReadOnlyList<UsageRecord> records)
     {
