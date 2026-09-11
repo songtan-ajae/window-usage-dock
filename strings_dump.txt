@@ -1,0 +1,350 @@
+"12% used · 88% left", so a reading lines up with whichever end your vendor happens to show.
+%@ (missing)
+%@ Usage
+%@ ago
+%@ is at %lld%%
+%@ left
+%@ limit reached
+%@ until %@
+%@ used
+%@% deficit
+%@% reserved
+%@%% Used · %@%% left
+%lld hr
+%lld hr %lld min
+%lld left
+%lld min
+%lld used
+%lld%% Used · %lld%% left
+%lld%% of its %@ limit used.
+%lldd limit
+%lldh limit
+%lldm limit
+1 left
+1 used
+10 seconds
+3 seconds
+5 seconds
+5h limit
+A CLI-only Cursor login now gets a ring, and enterprise/team plans read their real usage instead of reporting nothing to meter.
+A Displays picker in Appearance offers the main display or all of them; a second picker pins a single notch to a named screen.
+A brief window right after sleep, where macOS won't allow a keychain prompt yet, was mistaken for being signed out — which erased the reading and left "waiting for the first reading" on screen. It now ages the number instead of throwing it away, and picks back up on its own.
+A card is centred on the ring it belongs to, so the first and last providers threw half of it past the end of the panel — and what fell off was the title. The panel now keeps room for it.
+A countdown instead of a reset date
+A crashed or abandoned chat could read as "still working" for a day or more. It now notices when the writing has actually stopped.
+A limit renewing in four weeks said "Mon", which read as this Monday. It says "28 Sep".
+A months-old duplicate can no longer win
+A normal app icon in the Dock while Codenotch is running.
+A paused limit is shown as paused
+A reading under one percent shows a tenth ("<0.1%") instead of rounding to nothing.
+A real Codex account went unmetered
+A ring says when it crosses 80% and 100%
+A ring survives waking your Mac
+A small icon in the menu bar instead, and nothing in the Dock.
+A small pill at the screen edge that opens when you reach it.
+A stray click no longer pins the notch open
+A stuck Claude ring recovers on its own
+A system notification once per crossing, muted per provider from its own settings row.
+A tooltip with something to explain reserved one line for it however much it said.
+A way back from a declined keychain prompt
+A wide bar across the top, readings side by side. On a Mac with a notch of its own it runs up to meet it, so the two read as one shape.
+A wide bar resting on top of the Dock, readings side by side.
+API usage
+Accent color
+Accounts
+Agent
+Agentic research
+Alert when %@ crosses 80% and 100% of a limit.
+Alerts for %@ are muted. Click to unmute.
+All displays
+All models
+Allow access…
+Always show
+Always show no longer turns itself off
+Antigravity shows its actual quota
+Antigravity's real numbers, and a switch that stays off.
+App
+App designed and developed by
+App icon
+Appearance
+Appearance's Reset time picker can show "Resets in 3h 20m" instead of a date and time.
+As many sessions as your screen can hold
+Asks macOS for %@'s saved login again. Choose Always Allow and it will stop asking.
+Auto usage
+Bottom
+Check now
+Checking…
+Choose an accent colour
+Choose where Codenotch appears
+Claude Code files a new keychain entry on every token rotation. An account signed in for a while could pick an old, expired one at random and show "waiting for the first reading" forever.
+Claude reads its own CLI's /usage first, touching the keychain only as a fallback; Antigravity's language server is asked before it.
+Claude, Cursor, Codex and Gemini
+Clicking near the screen edge before the notch had even opened could leave it stuck open with nothing on screen explaining why.
+Clicking the notch toggled the same flag the setting used, so a stray click quietly put it back to showing on hover.
+Codenotch
+Codenotch Settings
+Codenotch is set to Always show. Change it in Settings.
+Codenotch is up to date.
+Codenotch never signs in — each reading is borrowed from the tool that already holds the account. Signing out here stops the credential being read and forgets the numbers, but leaves you signed in to that tool. macOS asks once per tool the first time, and again whenever you sign in to a different account; Always Allow keeps it quiet.
+Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.
+Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.
+Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor, Codex, Antigravity, GLM, Grok or OpenCode, and its ring appears in the notch.
+Codenotch uses this language even if the Mac does not.
+Codenotch was refused access to %@'s saved login. Click this ring to ask again, and choose Always Allow.
+Codex is read live instead of from a log
+Codex reads live, and Always show stays on.
+Codex reported no usage windows
+Codex's live reading only recognised a 5-hour and a 7-day window. A free-plan account's real limit was a 30-day one, which fell through unnoticed and showed as nothing metered on an account that was genuinely tracked.
+Command Code has nothing metered on this account yet
+Compares each timed allowance with the time left until reset, showing quota in deficit or held in reserve.
+Connect an assistant to get started
+Connect the Go plan in OpenCode to read your usage
+Connected
+Continue
+Contributors can build without Xcode signing
+Contributors can build without a certificate
+Couldn't reach the update server. Codenotch will try again on its own — nothing is wrong with this copy.
+Couldn't read usage — %@
+Current session
+Cursor sessions stop reporting work that already ended
+Daily quota
+Declining no longer looks like being signed out, and Allow access… asks macOS again.
+Desktop
+Device accent color
+Display
+Displays
+Distant resets show a date
+Dock
+Down the left-hand edge, clear of a Dock on that side.
+Down the right-hand edge, clear of a Dock on that side.
+Drag to reorder the rings
+Drag to reorder. The notch draws the rings in this order.
+Each display gets its own notch, and hovering one opens only that one.
+Each read from the tool already signed in on this Mac. Codenotch never asks for a password.
+Easier to read at a glance, and harder to ignore.
+Edge
+Enter an Ollama API key below, or export OLLAMA_API_KEY in your shell.
+Enter an Ollama API key in Settings, or export OLLAMA_API_KEY
+Every session, and a tooltip that fits on the screen.
+Far fewer keychain prompts
+Fewer keychain prompts for Claude and Antigravity
+Fills the ring against a ceiling you choose; Google publishes none for an API key.
+Finished
+Follow System
+Follow active window
+For
+Free queries
+GLM added
+General
+GitHub Copilot is a new ring
+GitHub Copilot reported no metered quotas
+Google will not answer Codenotch directly, so it asks Antigravity's own language server instead — the same place Antigravity's usage panel gets its figure.
+Grok Build
+Grok has nothing metered on this account yet
+Grok is a new ring
+Hide
+Hide Sidebar
+Hold ⌥ and drag the notch to slide it along its edge. Each edge remembers where you left it.
+Idle
+In the Dock, in the menu bar, or nowhere at all.
+Included usage
+Install updates automatically
+Integrations
+It joins your Mac's own notch
+It only ever watched the files the CLI and the VS Code extension write, so work done in the desktop app never made it spin.
+It stopped being read but its last reading was kept, so the ring came back at the next launch.
+Its %@ limit is spent — resets %@
+Its %@ limit is spent.
+Keep a work login apart with CLAUDE_CONFIG_DIR? It now gets its own ring, its own limits, and its own row in Settings, beside your personal one.
+Keep open
+Labs
+Language
+Large
+Left
+Local Models
+Localhost
+Long enough to notice, short enough to ignore.
+Long enough to read the session's name and reach for it.
+Long messages are no longer cut off
+Longer window
+MCP (1 month)
+Main display
+Matches the Mac's preferred language.
+Medium
+Menu bar
+Minutes under an hour; otherwise the reset date and time.
+Monthly budget
+Monthly limit
+Monthly usage
+Moves to the display containing the window receiving keyboard input.
+Multiple Claude Code accounts
+Neither
+No Gemini CLI, OpenCode or Hermes sessions found
+No OpenCode Go subscription on this key
+No icon anywhere. Open Codenotch again from Applications to bring these settings back.
+No reading
+None
+Not connected
+Not selected
+Notch
+Nothing is connected, so the notch has no rings to draw.
+Nothing on screen. Open Codenotch again from Applications to bring these settings back.
+Nothing on screen. The readings stay in the menu bar menu when App icon is Menu bar. Otherwise, open Codenotch again from Applications to bring these settings back.
+Notifications
+Nudge it clear of another menu-bar app anchored to the same spot; remembered per edge.
+On demand
+On the top edge it takes the hardware's shape, so the two read as one rather than as a bar parked underneath.
+Once a token expired, every check went back to the keychain — a prompt a minute. It now reads the secret only when the owning app has changed it, and never retries a refusal on a timer.
+One momentary failure — the Mac waking from sleep, most often — used to lock the ring until the app restarted. It now clears itself on the next check.
+Open %@
+Open Codenotch at login
+Open the notch for a moment
+OpenCode's Go plan is a new ring
+Opening Settings could still read a switched-off provider's account, and a reply already in flight could restore a reading you had just asked it to forget.
+Opens %@ in your browser. That site has its own sign-in, separate from the credential read here.
+Opens %@, which is where this account is signed in.
+Opus
+Pin the notch to one display, or show it on every one
+Pinned to %@.
+Play %@
+Play a sound
+Pro searches
+Put the notch anywhere
+Quit Codenotch
+Read Cursor from cursor-agent, and enterprise plans correctly
+Reads GitHub's Copilot quota endpoint using the GitHub CLI session already on the Mac.
+Reads the Go plan's official usage endpoint with the key OpenCode itself stores on sign-in — no second sign-in.
+Recentre
+Refresh all
+Refresh now
+Reorder the rings, pick a display, and get told when a limit is close.
+Requests today · no limit published
+Research
+Reset date
+Reset time
+Resets %@
+Resets in %lld Day %lldh
+Resets in %lld Days %lldh
+Resets in %lld min
+Resets in %lldh %lldm
+Resetting…
+Right
+Right, left, top or bottom. It keeps clear of the Dock and the menu bar, and follows when the Dock moves.
+Run `%@` once — it signs in and is what these readings come from. Use /login there to change account.
+Run `%@` once — it signs in and refreshes the token this reads. Use /login there to change account.
+Run grok login — it signs in and refreshes the token this reads.
+Say when a session ends
+Scoped
+Selected
+Session usage
+Set up a GLM Coding Plan key for a coding tool to read your usage
+Settings splits into Connected and Not connected; drag a connected row by its handle to change the order the notch draws them in.
+Settings…
+Show
+Show Sidebar
+Show on hover
+Show usage pace
+Sign in to %@
+Sign in to %@ to read this account.
+Sign in to %@ to read your usage
+Sign in to %@…
+Sign in to Antigravity to read your usage
+Sign in to Claude Code in ~/.claude-%@ to read your usage
+Sign in to Claude Code to read your usage
+Sign in to Codex in ~/.codex-%@ to read your usage
+Sign in to Codex to read your usage
+Sign in to Cursor in the editor
+Sign in with %@ to read this account.
+Sign in with GitHub CLI to read your Copilot usage
+Sign in with GitHub CLI using `gh auth login`, then enable GitHub Copilot.
+Sign in with the Command Code app to read your usage
+Sign in with the Command Code app — it writes ~/.commandcode/auth.json and the notch reads it.
+Sign in with the tool that owns this account.
+Sign out in the %@ window to use another account.
+Signed out — nothing is read, and no readings are kept.
+Signs out of %@ — the session belongs to Codenotch.
+Size
+Small
+Some limits are reached while the headline still shows room. The ring reads as spent and says when it lifts.
+Sonnet
+Start Ollama to monitor your local models
+Stays until you have had a chance to look up.
+Sub-1% usage no longer reads as 0%
+SuperGrok's weekly Grok Build allowance, read from the same billing endpoint the CLI uses, with the session in ~/.grok/auth.json.
+Switch accounts in %@; the notch follows.
+Switch accounts in the tool that owns it; the notch follows.
+Switch off to stop reading %@ and forget its readings. %@
+Switch on to sign in and read %@ again.
+Switch this on to give it a ring in the notch.
+Switching a provider off now really stops it
+Switching a provider off now sticks
+Switch…
+Takes the least room on the edge. Readable, but not from across the desk.
+Team on demand
+Terminal
+That display is disconnected. Codenotch follows the active window until it returns.
+The %@ plan has nothing for Cursor to meter yet
+The Codex ring notices the desktop app
+The device accent by default, or a fixed colour for the ring's positive state — the amber and red warning colours stay fixed regardless.
+The figure came from a file Codex writes during a turn, so it was as old as the last time you used it — three days stale in one case. Codenotch now asks Codex itself, and matches its own panel.
+The first release.
+The list was capped at four whatever you were running on. It is now solved for the display: ten on a large one, and "and N more" only when there is genuinely no room for the rest.
+The notch appears only on the display with the menu bar.
+The notch draws these in this order. Drag one by its handle to move it.
+The notch opens itself for a few seconds and sounds a chime when an agent stops working or starts waiting on you; a click jumps to it.
+The notch stays open with every reading visible.
+The ones that need you come first
+The size the notch was drawn at.
+There is nothing to sign in to: the count is added up from what Gemini CLI, OpenCode and Hermes recorded about their own calls. Your API key is never read.
+These have no ring to place. Switch one on and it joins the end of the list above.
+Threshold alerts
+Time remaining
+Time until usage resets, such as 3 Days 3h or 3h 20m.
+Tooltips are no longer cut off
+Top
+Two more accounts, four community fixes, and honest duplicates.
+Two more providers, and a live account plan that was silently dropped.
+Unavailable display
+Unlimited on the %@ plan — nothing to meter
+Untitled chat
+Usage
+Usage (%lld h)
+Usage (%lld wk)
+Usage reads both ways
+Usage rides on a Z.ai GLM Coding Plan key held by a coding tool — Claude Code's settings.json, ZCode or OpenCode. Set one up there and the notch reads it.
+Usage rides on the opencode-go key OpenCode stores on sign-in — connect Go inside OpenCode (`opencode auth login`) and the notch reads it.
+VS Code
+Version %@
+Version %@ is available and will install shortly.
+Version %@. Updates install in the background and apply next time Codenotch starts.
+Waiting for the first reading…
+Waiting on you
+Waiting, then busy, then idle — so if anything is summarised away, it is what matters least.
+Waking from sleep no longer erases a reading.
+Weekly
+Weekly limit
+Weekly usage
+What's New
+What's new in Codenotch
+When a session ends
+Working
+You stay signed in to %@ — end that session in %@ itself.
+You stay signed in to the tool that owns the account.
+Z.ai's Coding Plan reads live now too, with a key borrowed from whichever tool already holds one.
+and %lld more
+idle
+just now
+macOS is not letting Codenotch read %@'s saved login. Choose Allow access… above, then Always Allow.
+macOS refused this — try moving Codenotch to /Applications.
+macOS will ask once for permission to read Claude Code's and Antigravity's saved logins. Choose Always Allow — plain Allow makes it ask again every time.
+macOS will ask once for permission to read Claude Code's, Antigravity's and cursor-agent's saved logins. Choose Always Allow — plain Allow makes it ask again every time.
+make build and make test now sign themselves automatically when the maintainer's Developer ID isn't present — no Apple account needed to work on this.
+make build and make test sign themselves automatically when the maintainer's certificate isn't present, and CI now runs the suite on every push and pull request.
+no requests today
+tokens
+via %@
+waiting
+working
+~%lld request today
+~%lld requests today
+⌥-drag the pill along its edge

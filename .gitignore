@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.pidb
+*.pdb
+*.dmg
+dist/*.pdb
+dist/*.xml
+dist/*.json
