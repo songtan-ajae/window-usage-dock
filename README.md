@@ -1,10 +1,10 @@
-# Codenotch
+# Windows Usage Dock
 
 Windows 데스크톱에서 여러 AI 코딩 도구의 사용량과 세션 상태를 한눈에 확인하는 가벼운 노치형 모니터입니다.
 
 화면 가장자리에 작은 링 게이지로 상주하며, 마우스를 올리면 필요한 정보만 부드럽게 펼쳐 보여줍니다. 계정 비밀번호를 별도로 저장하지 않고, 각 도구가 이미 로컬에 남긴 CLI 설정과 세션 정보를 바탕으로 상태를 읽습니다.
 
-![Codenotch icon](dist/AppIcon.png)
+![Windows Usage Dock icon](dist/AppIcon.png)
 
 ## 주요 기능
 
@@ -38,9 +38,9 @@ provider별로 읽을 수 있는 quota와 세션 정보는 설치 상태와 로�
 
 ### 패키지 사용
 
-최신 Windows x64 패키지를 내려받아 압축을 풀고 `Codenotch.App.exe`를 실행합니다.
+최신 Windows x64 패키지를 내려받아 압축을 풀고 `WindowsUsageDock.exe`를 실행합니다.
 
-[Codenotch-win-x64-09c98f9.zip 다운로드](dist/Codenotch-win-x64-09c98f9.zip)
+[Windows Usage Dock win-x64 패키지 다운로드](dist/WindowsUsageDock-win-x64.zip)
 
 이 패키지는 self-contained single-file publish 결과물이라 별도의 .NET 런타임 설치가 필요하지 않습니다.
 
@@ -56,7 +56,7 @@ provider별로 읽을 수 있는 quota와 세션 정보는 설치 상태와 로�
 dotnet run --project src/Codenotch.App/Codenotch.App.csproj
 ```
 
-앱은 일반 창 대신 시스템 트레이와 화면 가장자리 노치로 실행됩니다. 종료하려면 트레이 아이콘의 `Codenotch 종료`를 선택합니다.
+앱은 일반 창 대신 시스템 트레이와 화면 가장자리 노치로 실행됩니다. 종료하려면 트레이 아이콘의 `Windows Usage Dock 종료`를 선택합니다.
 
 ## 사용 방법
 
@@ -73,7 +73,7 @@ dotnet run --project src/Codenotch.App/Codenotch.App.csproj
 
 ## 프라이버시와 권한
 
-Codenotch는 provider의 로컬 CLI 설정, 세션 데이터베이스, 로컬 포트 등 필요한 상태를 읽어 사용량을 표시합니다. 계정 비밀번호를 입력받거나 별도 계정 서버로 전송하지 않습니다.
+Windows Usage Dock은 provider의 로컬 CLI 설정, 세션 데이터베이스, 로컬 포트 등 필요한 상태를 읽어 사용량을 표시합니다. 계정 비밀번호를 입력받거나 별도 계정 서버로 전송하지 않습니다.
 
 사용하는 provider의 인증 파일과 토큰은 각 provider의 보안 정책을 따릅니다. 공유 PC에서는 로컬 계정과 설정 파일의 접근 권한을 확인한 뒤 사용하세요.
 
@@ -107,7 +107,7 @@ dotnet publish src/Codenotch.App/Codenotch.App.csproj `
 ## 프로젝트 구조
 
 ```text
-Codenotch/
+Codenotch/ (Windows Usage Dock)
 ├── src/
 │   ├── Codenotch.Core/       provider 연동, 모델, 사용량 서비스
 │   └── Codenotch.App/        WPF 노치 UI와 시스템 트레이
@@ -130,7 +130,7 @@ Codenotch/
 
 ### 노치가 보이지 않는 경우
 
-시스템 트레이에서 Codenotch 아이콘을 확인한 뒤 `노치 보이기`를 선택하세요. 그래도 보이지 않으면 앱을 종료하고 다시 실행합니다.
+시스템 트레이에서 Windows Usage Dock 아이콘을 확인한 뒤 `노치 보이기`를 선택하세요. 그래도 보이지 않으면 앱을 종료하고 다시 실행합니다.
 
 ### 특정 provider가 `미연결`로 표시되는 경우
 

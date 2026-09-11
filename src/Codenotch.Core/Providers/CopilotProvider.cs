@@ -107,7 +107,7 @@ public class CopilotProvider : IUsageProvider
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/copilot_internal/user");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            req.Headers.Add("User-Agent", "Codenotch/1.8 (Windows NT 10.0; Win64; x64)");
+            req.Headers.Add("User-Agent", "WindowsUsageDock/1.0 (Windows NT 10.0; Win64; x64)");
             req.Headers.Add("Editor-Version", "vscode/1.90.0");
 
             var resp = await _httpClient.SendAsync(req, cancellationToken);

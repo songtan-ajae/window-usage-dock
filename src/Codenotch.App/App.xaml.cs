@@ -36,7 +36,7 @@ public partial class App : WpfApplication
     {
         _notifyIcon = new Forms.NotifyIcon
         {
-            Text = "Codenotch - AI 쿼터 모니터",
+            Text = "Windows Usage Dock - AI 쿼터 모니터",
             Visible = true
         };
 
@@ -80,7 +80,7 @@ public partial class App : WpfApplication
 
         contextMenu.Items.Add(new Forms.ToolStripSeparator());
 
-        contextMenu.Items.Add("Codenotch 종료", null, (s, e) =>
+        contextMenu.Items.Add("Windows Usage Dock 종료", null, (s, e) =>
         {
             ExitApplication();
         });

@@ -16,6 +16,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>WindowsUsageDock</AssemblyName>
+    <Product>Windows Usage Dock</Product>
+    <Title>Windows Usage Dock</Title>
+    <Description>AI coding assistant usage monitor for Windows</Description>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>

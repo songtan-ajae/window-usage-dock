@@ -118,7 +118,7 @@ public class CursorProvider : IUsageProvider
             using var req = new HttpRequestMessage(HttpMethod.Get, "https://cursor.com/api/usage-summary");
             req.Headers.Add("Cookie", $"WorkosCursorSessionToken={accessToken}");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            req.Headers.Add("User-Agent", "Codenotch/1.8 (Windows NT 10.0; Win64; x64)");
+            req.Headers.Add("User-Agent", "WindowsUsageDock/1.0 (Windows NT 10.0; Win64; x64)");
 
             var resp = await _httpClient.SendAsync(req, cancellationToken);
             if (resp.IsSuccessStatusCode)

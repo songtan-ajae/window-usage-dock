@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Codenotch.App.Controls"
         mc:Ignorable="d"
-        Title="Codenotch"
+        Title="Windows Usage Dock"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
