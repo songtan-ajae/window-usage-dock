@@ -1,86 +1,145 @@
-# Codenotch for Windows 🪟⚡
+# Codenotch
 
-> macOS 전용이었던 **Codenotch**를 역공학(Reverse Engineering)하여 Windows 네이티브 환경에 맞게 완벽하게 재구성한 AI 어시스턴트 쿼터 & 세션 모니터입니다.
+Windows 데스크톱에서 여러 AI 코딩 도구의 사용량과 세션 상태를 한눈에 확인하는 가벼운 노치형 모니터입니다.
 
-![Codenotch Icon](dist/AppIcon.png)
+화면 가장자리에 작은 링 게이지로 상주하며, 마우스를 올리면 필요한 정보만 부드럽게 펼쳐 보여줍니다. 계정 비밀번호를 별도로 저장하지 않고, 각 도구가 이미 로컬에 남긴 CLI 설정과 세션 정보를 바탕으로 상태를 읽습니다.
 
----
+![Codenotch icon](dist/AppIcon.png)
 
-## 🌟 주요 특징 (Key Features)
+## 주요 기능
 
-1. **Zero-Login Architecture (비밀번호 불필요)**
-   - 별도로 계정 아이디/비밀번호를 입력받지 않습니다.
-   - 로컬 PC에 이미 로그인된 CLI 설정 파일(`auth.json`), 에디터 세션 DB(`state.vscdb`), 로컬 포트(`11434` 등) 및 인증 토큰을 안전하게 재활용합니다.
+- 화면 오른쪽에 고정되는 compact notch UI
+- provider별 잔여 사용량 링 게이지
+- hover 시 5시간/주간 등 세부 quota와 reset 시간 표시
+- 연결되지 않은 provider와 활성 세션 상태 구분
+- 마우스 드래그 이동 및 더블 클릭 재정렬
+- pin 기능으로 상세 패널 고정
+- 시스템 트레이 상주 및 사용량 임계치 알림
+- Windows 11에서도 자연스럽게 보이는 반투명 glass 스타일
+- 짧고 취소 가능한 hover motion과 Windows 모션 감소 설정 대응
+- 별도 서버 없이 로컬 상태만 조회하는 구조
 
-2. **지원하는 AI 코딩 어시스턴트**
-   - **Google Antigravity**: 주간/일간 쿼터 및 활성 세션 모니터링
-   - **OpenAI Codex / ChatGPT**: 5시간/주간/월간 할당량 및 잔여량
-   - **Cursor**: Pro/Team 요청 수치(`numFastRequests / maxFastRequests`) 및 월별 리셋 주기
-   - **Claude Code**: 세션 쿼터, 주간 한도 및 CLI 연동
-   - **GitHub Copilot**: 할당량 및 플랜 상태
-   - **xAI Grok**: Grok Build 크레딧 및 주간 잔여 사용률
-   - **Ollama**: 로컬 실행 중인 모델 및 오프라인 상태 감지
-   - **OpenCode, Command Code, GLM (Z.ai)**
+## 지원 provider
 
-3. **모던 다이내믹 아일랜드 / 노치 바 UI (Modern Fluent Overlay)**
-   - **컴팩트 알약 뷰 (Pill Bar)**: 화면 상단 중앙에 자석처럼 붙어있는 세련된 다크 글래스 알약 위젯.
-   - **호버 확장 (Expand on Hover)**: 마우스를 올리면 부드러운 애니메이션과 함께 상세 카드(사용량 퍼센트, 게이지 바, 리셋까지 남은 시간, 세션 상태)가 펼쳐집니다.
-   - **자유 드래그 이동**: 마우스로 어디든 원하는 위치로 드래그할 수 있으며, 더블 클릭 시 다시 화면 상단 중앙으로 복귀합니다.
-   - **상시 표시 (Always Show) 핀 고정**: 📌 버튼으로 노치를 항상 펼쳐진 상태로 고정 가능.
+현재 다음 provider를 탐색합니다.
 
-4. **시스템 트레이 (System Tray) 상주 & 임계치 알림**
-   - 작업 표시줄 트레이 아이콘 지원 (더블 클릭 시 노치 표시/숨김)
-   - 쿼터 80% 및 100% 도달 시 Windows 시스템 경고 알림
+- OpenAI Codex / ChatGPT
+- Claude Code
+- Cursor
+- GitHub Copilot
+- Google Antigravity
+- xAI Grok
+- Ollama
+- OpenCode, Command Code, GLM(Z.ai) 및 기타 provider
 
-5. **초경량 고성능 네이티브 앱**
-   - .NET 8.0 WPF 기반으로 빌드되어 실행 파일 크기가 1MB 미만(단 740KB)이며, 메모리 사용량이 극히 적습니다.
+provider별로 읽을 수 있는 quota와 세션 정보는 설치 상태와 로컬 설정 형식에 따라 달라질 수 있습니다.
 
----
+## 빠른 실행
 
-## 🚀 실행 및 빌드 방법
+### 패키지 사용
 
-### 1. 즉시 실행 (Pre-built Release)
-배포 디렉토리 `dist/`에 단일 실행 파일로 빌드되어 있습니다.
+최신 Windows x64 패키지를 내려받아 압축을 풀고 `Codenotch.App.exe`를 실행합니다.
+
+[Codenotch-win-x64-09c98f9.zip 다운로드](dist/Codenotch-win-x64-09c98f9.zip)
+
+이 패키지는 self-contained single-file publish 결과물이라 별도의 .NET 런타임 설치가 필요하지 않습니다.
+
+### 소스에서 실행
+
+필요한 환경:
+
+- Windows 10 또는 Windows 11
+- .NET 8 SDK
+- Windows 데스크톱 개발 환경(WPF)
+
 ```powershell
-# 배포 폴더로 이동 후 실행
-cd dist
-.\Codenotch.App.exe
+dotnet run --project src/Codenotch.App/Codenotch.App.csproj
 ```
 
-### 2. 소스 코드에서 빌드 및 디버그
+앱은 일반 창 대신 시스템 트레이와 화면 가장자리 노치로 실행됩니다. 종료하려면 트레이 아이콘의 `Codenotch 종료`를 선택합니다.
+
+## 사용 방법
+
+| 동작 | 결과 |
+| --- | --- |
+| 노치에 마우스 올리기 | 상세 사용량 패널 확장 |
+| 노치 밖으로 이동 | 잠시 후 compact 상태로 축소 |
+| provider 링 클릭 | 상세 정보 provider 변경 |
+| 노치 드래그 | 세로 위치 이동 |
+| 노치 더블 클릭 | 화면 중앙 높이로 복귀 |
+| `고정` 버튼 | 상세 패널을 계속 펼쳐 둠 |
+| `새로고침` 버튼 | 모든 provider 다시 조회 |
+| 트레이 아이콘 더블 클릭 | 노치 표시/숨김 |
+
+## 프라이버시와 권한
+
+Codenotch는 provider의 로컬 CLI 설정, 세션 데이터베이스, 로컬 포트 등 필요한 상태를 읽어 사용량을 표시합니다. 계정 비밀번호를 입력받거나 별도 계정 서버로 전송하지 않습니다.
+
+사용하는 provider의 인증 파일과 토큰은 각 provider의 보안 정책을 따릅니다. 공유 PC에서는 로컬 계정과 설정 파일의 접근 권한을 확인한 뒤 사용하세요.
+
+## 개발 및 테스트
+
+솔루션 빌드:
+
 ```powershell
-# 솔루션 빌드
 dotnet build Codenotch.sln
+```
 
-# 바로 실행
-dotnet run --project src/Codenotch.App/Codenotch.App.csproj
+단위 테스트:
 
-# 단위 테스트 실행
+```powershell
 dotnet test
 ```
 
----
+Release 패키지 생성:
 
-## 📁 프로젝트 구조
-
+```powershell
+dotnet publish src/Codenotch.App/Codenotch.App.csproj `
+  -c Release `
+  -r win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:EnableCompressionInSingleFile=true `
+  -o dist/package
 ```
-codenotch/
-├── Codenotch.dmg               # 원본 macOS DMG 패키지
-├── extracted/                  # 리버스 엔지니어링 분석 추출 데이터
-├── strings_dump.txt            # 로컬라이제이션 및 UI 문자열 추출본
-├── dist/                       # Windows 배포 실행 파일 (740KB 단일 exe)
-│   ├── Codenotch.App.exe
-│   ├── AppIcon.ico
-│   └── AppIcon.png
+
+## 프로젝트 구조
+
+```text
+Codenotch/
 ├── src/
-│   ├── Codenotch.Core/         # AI 어시스턴트 프로바이더 & 데이터 수집 엔진
-│   │   ├── Models/             # UsageRecord, SessionStatus
-│   │   ├── Interfaces/         # IUsageProvider
-│   │   ├── Providers/          # Antigravity, Cursor, Codex, Claude, Copilot 등
-│   │   └── Services/           # UsageManager (주기적 폴링 & 80/100% 알림)
-│   └── Codenotch.App/          # WPF 모던 글래스 노치 UI & 시스템 트레이
-│       ├── Controls/           # RingGaugeControl (원형 게이지 컨트롤)
-│       └── Views/              # NotchWindow, SettingsWindow
-└── tests/
-    └── Codenotch.Tests/        # 프로바이더 단위 테스트 (xUnit)
+│   ├── Codenotch.Core/       provider 연동, 모델, 사용량 서비스
+│   └── Codenotch.App/        WPF 노치 UI와 시스템 트레이
+├── tests/                    provider 단위 테스트
+├── dist/                     Windows 배포 패키지
+├── Codenotch.sln
+└── README.md
 ```
+
+### 기술 구성
+
+- .NET 8
+- WPF
+- Windows Forms NotifyIcon
+- provider adapter 구조
+- 로컬 데이터 기반 polling
+- WPF animation과 Windows composition을 고려한 glass UI
+
+## 문제 해결
+
+### 노치가 보이지 않는 경우
+
+시스템 트레이에서 Codenotch 아이콘을 확인한 뒤 `노치 보이기`를 선택하세요. 그래도 보이지 않으면 앱을 종료하고 다시 실행합니다.
+
+### 특정 provider가 `미연결`로 표시되는 경우
+
+해당 provider의 CLI 또는 데스크톱 앱에 먼저 로그인되어 있는지 확인하세요. provider가 설치되지 않았거나 예상 경로에 로컬 세션 정보가 없으면 미연결로 표시될 수 있습니다.
+
+### 사용량이 최신 값이 아닌 경우
+
+상세 패널의 `새로고침`을 누르거나 트레이 메뉴에서 `전체 새로고침`을 선택하세요. provider 자체의 reset 지연이나 로컬 캐시 때문에 값이 늦게 반영될 수도 있습니다.
+
+## License
+
+현재 저장소에는 별도 라이선스 파일이 포함되어 있지 않습니다. 사용·배포 정책을 정하기 전 저장소 소유자의 안내를 확인하세요.
