@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using Codenotch.App.Controls;
 using Codenotch.Core.Models;
 using Codenotch.Core.Services;
@@ -27,7 +29,9 @@ public partial class NotchWindow : Window
     private UsageRecord? _selectedRecord = null;
     private IReadOnlyList<UsageRecord> _latestRecords = Array.Empty<UsageRecord>();
     private readonly DispatcherTimer _collapseTimer;
+    private readonly DispatcherTimer _expandTimer;
     private bool _motionInProgress;
+    private int _animationId;
 
     private const double CompactWidth = 40.0;
     private const double CompactHeight = 136.0;
@@ -68,6 +72,18 @@ public partial class NotchWindow : Window
             if (!_isPinned && !IsMouseOver && !_isDraggingVertical)
                 AnimateExpansion(false);
         };
+
+        // Require a short, stable hover before expanding. This prevents the
+        // window-resize hit-test boundary from retriggering the transition.
+        _expandTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(90) };
+        _expandTimer.Tick += (_, _) =>
+        {
+            _expandTimer.Stop();
+            if (IsMouseOver && !_isExpanded && !_isDraggingVertical)
+                AnimateExpansion(true);
+        };
+
+        SourceInitialized += (_, _) => ApplyAcrylicBackdrop();
     }
 
     private void NotchWindow_Loaded(object sender, RoutedEventArgs e)
@@ -134,7 +150,11 @@ public partial class NotchWindow : Window
     private void NotchWindow_MouseEnter(object sender, WpfMouseEventArgs e)
     {
         _collapseTimer.Stop();
-        if (!_isExpanded && !_isDraggingVertical) AnimateExpansion(true);
+        if (!_isExpanded && !_isDraggingVertical)
+        {
+            _expandTimer.Stop();
+            _expandTimer.Start();
+        }
     }
 
     private void NotchWindow_MouseLeave(object sender, WpfMouseEventArgs e)
@@ -151,6 +171,7 @@ public partial class NotchWindow : Window
         if (_motionInProgress && ((expand && _isExpanded) || (!expand && !_isExpanded))) return;
         if (expand == _isExpanded && !(_motionInProgress && expand)) return;
 
+        var animationId = ++_animationId;
         _isExpanded = expand;
         _motionInProgress = true;
 
@@ -206,6 +227,7 @@ public partial class NotchWindow : Window
 
         animWidth.Completed += (_, _) =>
         {
+            if (animationId != _animationId) return;
             _motionInProgress = false;
             if (!expand && !_isExpanded)
             {
@@ -218,6 +240,67 @@ public partial class NotchWindow : Window
         BeginAnimation(HeightProperty, animHeight);
         BeginAnimation(LeftProperty, animLeft);
     }
+
+    private void ApplyAcrylicBackdrop()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var accent = new AccentPolicy
+        {
+            AccentState = AccentState.EnableAcrylicBlurBehind,
+            AccentFlags = 2,
+            GradientColor = unchecked((int)0xD91B1B1F)
+        };
+        var size = Marshal.SizeOf(accent);
+        var ptr = Marshal.AllocHGlobal(size);
+        try
+        {
+            Marshal.StructureToPtr(accent, ptr, false);
+            var data = new WindowCompositionAttributeData
+            {
+                Attribute = WindowCompositionAttribute.WcaAccentPolicy,
+                Data = ptr,
+                SizeOfData = size
+            };
+            SetWindowCompositionAttribute(hwnd, ref data);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(ptr);
+        }
+    }
+
+    private enum AccentState
+    {
+        Disabled = 0,
+        EnableAcrylicBlurBehind = 4
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct AccentPolicy
+    {
+        public AccentState AccentState;
+        public int AccentFlags;
+        public int GradientColor;
+        public int AnimationId;
+    }
+
+    private enum WindowCompositionAttribute
+    {
+        WcaAccentPolicy = 19
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WindowCompositionAttributeData
+    {
+        public WindowCompositionAttribute Attribute;
+        public IntPtr Data;
+        public int SizeOfData;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
     private void OnUsageUpdated(IReadOnlyList<UsageRecord> records)
     {
