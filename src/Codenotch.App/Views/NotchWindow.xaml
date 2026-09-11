@@ -44,7 +44,11 @@
                 </Grid>
 
                 <!-- EXPANDED DRAWER: 5시간 제한과 주간 제한을 전부 다 함께 보여주는 상세 서랍 -->
-                <Grid x:Name="ExpandedContent" Width="380" Visibility="Collapsed" Opacity="0">
+                <Grid x:Name="ExpandedContent" Width="380" Visibility="Collapsed" Opacity="0"
+                      RenderTransformOrigin="1,0.5">
+                    <Grid.RenderTransform>
+                        <ScaleTransform x:Name="ExpandedScale" ScaleX="0.96" ScaleY="0.96" />
+                    </Grid.RenderTransform>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />

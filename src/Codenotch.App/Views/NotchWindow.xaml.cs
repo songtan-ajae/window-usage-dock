@@ -15,6 +15,7 @@ using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using Brushes = System.Windows.Media.Brushes;
 using SolidColorBrush = System.Windows.Media.SolidColorBrush;
+using ScaleTransform = System.Windows.Media.ScaleTransform;
 using Cursors = System.Windows.Input.Cursors;
 using WpfMouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
@@ -187,25 +188,38 @@ public partial class NotchWindow : Window
             : TimeSpan.FromMilliseconds(1);
         var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
 
-        var animWidth = new DoubleAnimation { From = Width, To = targetWidth, Duration = duration, EasingFunction = easing };
-        var animHeight = new DoubleAnimation { From = Height, To = targetHeight, Duration = duration, EasingFunction = easing };
-        var animLeft = new DoubleAnimation { From = Left, To = targetLeft, Duration = duration, EasingFunction = easing };
-
-        Timeline.SetDesiredFrameRate(animWidth, DesiredFps);
-        Timeline.SetDesiredFrameRate(animHeight, DesiredFps);
-        Timeline.SetDesiredFrameRate(animLeft, DesiredFps);
-
         if (expand)
         {
+            // Resize the transparent HWND once. Animating HWND geometry every
+            // frame causes WPF/DWM to recalculate hit testing and composition.
+            BeginAnimation(WidthProperty, null);
+            BeginAnimation(HeightProperty, null);
+            BeginAnimation(LeftProperty, null);
+            Width = targetWidth;
+            Height = targetHeight;
+            Left = targetLeft;
+
             ExpandedContent.Visibility = Visibility.Visible;
-            CompactView.Visibility = Visibility.Collapsed;
+            ExpandedContent.Opacity = 0;
+            ExpandedScale.ScaleX = 0.96;
+            ExpandedScale.ScaleY = 0.96;
 
             var animFadeIn = new DoubleAnimation(0.0, 1.0, duration)
             {
                 EasingFunction = easing
             };
+            var animScaleX = new DoubleAnimation(0.96, 1.0, duration) { EasingFunction = easing };
+            var animScaleY = new DoubleAnimation(0.96, 1.0, duration) { EasingFunction = easing };
+            animFadeIn.Completed += (_, _) =>
+            {
+                if (animationId == _animationId) _motionInProgress = false;
+            };
             Timeline.SetDesiredFrameRate(animFadeIn, DesiredFps);
+            Timeline.SetDesiredFrameRate(animScaleX, DesiredFps);
+            Timeline.SetDesiredFrameRate(animScaleY, DesiredFps);
             ExpandedContent.BeginAnimation(OpacityProperty, animFadeIn);
+            ExpandedScale.BeginAnimation(ScaleTransform.ScaleXProperty, animScaleX);
+            ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, animScaleY);
         }
         else
         {
@@ -213,32 +227,34 @@ public partial class NotchWindow : Window
             {
                 EasingFunction = easing
             };
+            var animScaleX = new DoubleAnimation(1.0, 0.96, duration) { EasingFunction = easing };
+            var animScaleY = new DoubleAnimation(1.0, 0.96, duration) { EasingFunction = easing };
             Timeline.SetDesiredFrameRate(animFadeOut, DesiredFps);
+            Timeline.SetDesiredFrameRate(animScaleX, DesiredFps);
+            Timeline.SetDesiredFrameRate(animScaleY, DesiredFps);
             animFadeOut.Completed += (s, e) =>
             {
-                if (!_isExpanded)
+                if (!_isExpanded && animationId == _animationId)
                 {
                     ExpandedContent.Visibility = Visibility.Collapsed;
                     CompactView.Visibility = Visibility.Visible;
+                    BeginAnimation(WidthProperty, null);
+                    BeginAnimation(HeightProperty, null);
+                    BeginAnimation(LeftProperty, null);
+                    Width = CompactWidth;
+                    Height = CompactHeight;
+                    Left = workArea.Right - CompactWidth;
+                    ExpandedContent.Opacity = 0;
+                    ExpandedScale.ScaleX = 0.96;
+                    ExpandedScale.ScaleY = 0.96;
                 }
+                if (animationId == _animationId) _motionInProgress = false;
             };
             ExpandedContent.BeginAnimation(OpacityProperty, animFadeOut);
+            ExpandedScale.BeginAnimation(ScaleTransform.ScaleXProperty, animScaleX);
+            ExpandedScale.BeginAnimation(ScaleTransform.ScaleYProperty, animScaleY);
         }
 
-        animWidth.Completed += (_, _) =>
-        {
-            if (animationId != _animationId) return;
-            _motionInProgress = false;
-            if (!expand && !_isExpanded)
-            {
-                ExpandedContent.Visibility = Visibility.Collapsed;
-                CompactView.Visibility = Visibility.Visible;
-            }
-        };
-
-        BeginAnimation(WidthProperty, animWidth);
-        BeginAnimation(HeightProperty, animHeight);
-        BeginAnimation(LeftProperty, animLeft);
     }
 
     private void ApplyAcrylicBackdrop()
