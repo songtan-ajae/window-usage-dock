@@ -26,8 +26,8 @@ namespace Codenotch.App.Controls;
 
 public partial class RingGaugeControl : WpfUserControl
 {
-    // Remaining percentage (100% -> 0% decreasing)
-    private double _remainingPercentage = 100.0;
+    // Usage percentage (0% -> 100% increasing), shared with the detail bar.
+    private double _usedPercentage;
     private string _glyph = "AI";
     private bool _isConnected = true;
     private SessionStatus _status = SessionStatus.Idle;
@@ -41,21 +41,20 @@ public partial class RingGaugeControl : WpfUserControl
     public void UpdateData(UsageRecord record)
     {
         _glyph = record.Glyph;
-        // 100%에서 0%로 줄어드는 잔여량 기준!
-        _remainingPercentage = Math.Clamp(record.PrimaryRemainingPercentage, 0.0, 100.0);
+        _usedPercentage = Math.Clamp(record.PrimaryUsedPercentage, 0.0, 100.0);
         _isConnected = record.IsConnected;
         _status = record.Status;
 
-        // 잔여량에 따른 직관적 색상: 여유 있으면 브랜드 색상 -> 20% 이하 주황 -> 5% 이하 빨강
+        // Usage-based color: brand color while healthy, amber/red as the quota fills.
         if (!_isConnected)
         {
             _brandBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4B4B52"));
         }
-        else if (_remainingPercentage <= 5.0)
+        else if (_usedPercentage >= 95.0)
         {
             _brandBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444")); // 바닥남 (빨강)
         }
-        else if (_remainingPercentage <= 20.0)
+        else if (_usedPercentage >= 80.0)
         {
             _brandBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B")); // 얼마 안남음 (주황)
         }
@@ -91,8 +90,8 @@ public partial class RingGaugeControl : WpfUserControl
         trackPen.Freeze();
         dc.DrawEllipse(null, trackPen, center, radius, radius);
 
-        // 2. Remaining Progress Arc (100% -> 0% decreasing)
-        if (_isConnected && _remainingPercentage > 0.5)
+        // 2. Used Progress Arc (0% -> 100% increasing)
+        if (_isConnected && _usedPercentage > 0.5)
         {
             var progressPen = new Pen(_brandBrush, strokeThickness)
             {
@@ -101,14 +100,14 @@ public partial class RingGaugeControl : WpfUserControl
             };
             progressPen.Freeze();
 
-            if (_remainingPercentage >= 99.5)
+            if (_usedPercentage >= 99.5)
             {
-                // Full Circle (100% remaining)
+                // Full Circle (100% used)
                 dc.DrawEllipse(null, progressPen, center, radius, radius);
             }
             else
             {
-                double angle = (_remainingPercentage / 100.0) * 360.0;
+                double angle = (_usedPercentage / 100.0) * 360.0;
                 double rad = (angle - 90.0) * Math.PI / 180.0;
 
                 Point startPoint = new Point(center.X, center.Y - radius);
@@ -148,12 +147,6 @@ public partial class RingGaugeControl : WpfUserControl
 
         dc.DrawText(formattedText, textPos);
 
-        // 4. Status indicator dot for working sessions
-        if (_status == SessionStatus.Working)
-        {
-            var activeDotBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
-            activeDotBrush.Freeze();
-            dc.DrawEllipse(activeDotBrush, null, new Point(center.X, center.Y + radius - 1.5), 1.8, 1.8);
-        }
+        // Status is communicated by the ring color and tooltip; no extra dot.
     }
 }

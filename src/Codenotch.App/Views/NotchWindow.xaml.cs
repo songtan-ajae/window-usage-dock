@@ -61,6 +61,8 @@ public partial class NotchWindow : Window
         MouseDoubleClick += NotchWindow_MouseDoubleClick;
 
         _usageManager.UsageUpdated += OnUsageUpdated;
+        PrimaryBarContainer.SizeChanged += (_, _) => UpdateUsageBars(_selectedRecord);
+        SecondaryBarContainer.SizeChanged += (_, _) => UpdateUsageBars(_selectedRecord);
 
         // A small grace period prevents the drawer from snapping shut while the
         // pointer crosses the rounded edge or moves between interactive controls.
@@ -327,6 +329,7 @@ public partial class NotchWindow : Window
             TxtPrimaryLabel.Text = "연결 상태";
             TxtPrimaryReset.Text = "로그인 대기";
             PrimaryBarFill.Width = 0;
+            SecondaryBarFill.Width = 0;
             TxtPrimaryUsage.Text = "활성 세션 없음 · 터미널에서 `claude` 로그인 필요";
             SecondarySection.Visibility = Visibility.Collapsed;
             return;
@@ -348,11 +351,8 @@ public partial class NotchWindow : Window
         PrimaryBarFill.Background = brandBrush;
         SecondaryBarFill.Background = brandBrush;
 
-        double maxBarWidth = 240.0;
-
         // 1. 5시간 사용 제한 (Primary Window)
         double primaryRemaining = Math.Clamp(record.PrimaryRemainingPercentage, 0, 100);
-        PrimaryBarFill.Width = (primaryRemaining / 100.0) * maxBarWidth;
         TxtPrimaryUsage.Text = $"{primaryRemaining:F0}% 남음 · {record.PrimaryUsedPercentage:F0}% 사용됨";
         TxtPrimaryReset.Text = record.ResetTimeText;
         TxtPrimaryLabel.Text = record.SubWindows.Count > 0 ? record.SubWindows[0].Label : "5시간 사용 제한";
@@ -363,7 +363,6 @@ public partial class NotchWindow : Window
             SecondarySection.Visibility = Visibility.Visible;
             var sec = record.SubWindows[1];
             double secRemaining = Math.Clamp(sec.RemainingPercentage, 0, 100);
-            SecondaryBarFill.Width = (secRemaining / 100.0) * maxBarWidth;
             TxtSecondaryLabel.Text = sec.Label;
             TxtSecondaryUsage.Text = $"{secRemaining:F0}% 남음 · {sec.UsedPercentage:F0}% 사용됨";
             TxtSecondaryReset.Text = sec.ResetsInText;
@@ -371,6 +370,30 @@ public partial class NotchWindow : Window
         else
         {
             SecondarySection.Visibility = Visibility.Collapsed;
+        }
+
+        UpdateUsageBars(record);
+    }
+
+    private void UpdateUsageBars(UsageRecord? record)
+    {
+        if (record == null || !record.IsConnected)
+        {
+            PrimaryBarFill.Width = 0;
+            SecondaryBarFill.Width = 0;
+            return;
+        }
+
+        var primaryWidth = PrimaryBarContainer.ActualWidth;
+        if (primaryWidth > 0)
+        {
+            PrimaryBarFill.Width = primaryWidth * Math.Clamp(record.PrimaryUsedPercentage, 0, 100) / 100.0;
+        }
+
+        if (record.SubWindows.Count > 1 && SecondaryBarContainer.ActualWidth > 0)
+        {
+            SecondaryBarFill.Width = SecondaryBarContainer.ActualWidth *
+                Math.Clamp(record.SubWindows[1].UsedPercentage, 0, 100) / 100.0;
         }
     }
 
