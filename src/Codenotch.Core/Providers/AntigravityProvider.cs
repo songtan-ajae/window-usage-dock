@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Codenotch.Core.Interfaces;
 using Codenotch.Core.Models;
+using Codenotch.Core.Services;
 
 namespace Codenotch.Core.Providers;
 
@@ -34,6 +35,11 @@ public class AntigravityProvider : IUsageProvider
     public string BrandColor => "#4285F4"; // Google Blue
     public string Glyph => "AG";
     public int Priority => 2;
+
+    public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(AgentProcessMonitor.IsRunning("antigravity"));
+    }
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {

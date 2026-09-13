@@ -273,12 +273,25 @@ public partial class NotchWindow : Window
                 ExpandedRingsPanel.Children.Add(ringExpanded);
             }
 
-            if (_selectedRecord != null)
+            if (records.Count == 0)
+            {
+                _selectedRecord = null;
+                ShowNoActiveAgentsState();
+            }
+            else if (_selectedRecord != null)
             {
                 var updated = records.FirstOrDefault(r => r.ProviderId == _selectedRecord.ProviderId);
-                if (updated != null) SelectRecord(updated);
+                if (updated != null)
+                {
+                    SelectRecord(updated);
+                }
+                else
+                {
+                    _selectedRecord = null;
+                    SelectRecord(records[0]);
+                }
             }
-            else if (records.Count > 0)
+            else
             {
                 SelectRecord(records[0]);
             }
@@ -320,6 +333,7 @@ public partial class NotchWindow : Window
     private void SelectRecord(UsageRecord record)
     {
         _selectedRecord = record;
+        BadgePlan.Visibility = Visibility.Visible;
         TxtDetailName.Text = record.DisplayName;
 
         if (!record.IsConnected)
@@ -373,6 +387,18 @@ public partial class NotchWindow : Window
         }
 
         UpdateUsageBars(record);
+    }
+
+    private void ShowNoActiveAgentsState()
+    {
+        TxtDetailName.Text = "실행 중인 에이전트 없음";
+        BadgePlan.Visibility = Visibility.Collapsed;
+        TxtPrimaryLabel.Text = "대기 중";
+        TxtPrimaryReset.Text = string.Empty;
+        TxtPrimaryUsage.Text = "Codex, Antigravity 또는 Claude Code를 실행하면 표시됩니다.";
+        PrimaryBarFill.Width = 0;
+        SecondaryBarFill.Width = 0;
+        SecondarySection.Visibility = Visibility.Collapsed;
     }
 
     private void UpdateUsageBars(UsageRecord? record)

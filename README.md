@@ -9,6 +9,7 @@ Windows 데스크톱에서 여러 AI 코딩 도구의 사용량과 세션 상태
 ## 주요 기능
 
 - 화면 오른쪽에 고정되는 compact notch UI
+- 실행 중인 AI 에이전트만 자동 감지해 표시
 - provider별 잔여 사용량 링 게이지
 - hover 시 5시간/주간 등 세부 quota와 reset 시간 표시
 - 연결되지 않은 provider와 활성 세션 상태 구분

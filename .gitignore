@@ -12,3 +12,4 @@ dist/*.xml
 dist/*.json
 dist/Codenotch-win-x64-*/
 dist/WindowsUsageDock-win-x64-*/
+dist/WindowsUsageDock-win-x64/

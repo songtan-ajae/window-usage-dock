@@ -12,6 +12,8 @@ public interface IUsageProvider
     string Glyph { get; }
     int Priority { get; }
 
+    Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
+        => IsAvailableAsync(cancellationToken);
     Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default);
     Task<UsageRecord> FetchUsageAsync(CancellationToken cancellationToken = default);
 }

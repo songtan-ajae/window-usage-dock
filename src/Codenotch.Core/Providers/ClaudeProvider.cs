@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Codenotch.Core.Interfaces;
 using Codenotch.Core.Models;
+using Codenotch.Core.Services;
 
 namespace Codenotch.Core.Providers;
 
@@ -16,6 +17,11 @@ public class ClaudeProvider : IUsageProvider
     public string BrandColor => "#D97706"; // Anthropic Amber/Terracotta
     public string Glyph => "CC";
     public int Priority => 3;
+
+    public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(AgentProcessMonitor.IsClaudeCodeRunning());
+    }
 
     private string GetClaudeDir()
     {

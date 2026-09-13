@@ -22,14 +22,24 @@ public class UsageManager : IDisposable
     public IReadOnlyList<UsageRecord> CurrentRecords { get; private set; } = Array.Empty<UsageRecord>();
 
     public UsageManager()
+        : this(new IUsageProvider[]
+        {
+            new CodexProvider(),
+            new AntigravityProvider(),
+            new ClaudeProvider()
+        })
     {
-        // 사용자가 요청한 3대 핵심 AI 어시스턴트 순서: 코덱스 -> 안티그래비티 -> 클로드
-        _providers.Add(new CodexProvider());
-        _providers.Add(new AntigravityProvider());
-        _providers.Add(new ClaudeProvider());
+    }
 
-        // 15초마다 자동 새로고침
-        _pollTimer = new Timer(async _ => await RefreshAllAsync(), null, TimeSpan.FromMilliseconds(300), TimeSpan.FromSeconds(15));
+    public UsageManager(IEnumerable<IUsageProvider> providers, bool startPolling = true)
+    {
+        _providers.AddRange(providers);
+
+        _pollTimer = new Timer(
+            async _ => await RefreshAllAsync(),
+            null,
+            startPolling ? TimeSpan.FromMilliseconds(300) : Timeout.InfiniteTimeSpan,
+            startPolling ? TimeSpan.FromSeconds(15) : Timeout.InfiniteTimeSpan);
     }
 
     public async Task RefreshAllAsync()
@@ -39,7 +49,16 @@ public class UsageManager : IDisposable
 
         try
         {
-            var tasks = _providers.Select(p => p.FetchUsageAsync()).ToList();
+            var activeProviders = await Task.WhenAll(_providers.Select(async provider => new
+            {
+                Provider = provider,
+                IsRunning = await provider.IsAgentRunningAsync()
+            }));
+
+            var tasks = activeProviders
+                .Where(candidate => candidate.IsRunning)
+                .Select(candidate => candidate.Provider.FetchUsageAsync())
+                .ToList();
             var results = await Task.WhenAll(tasks);
 
             // 항상 지정된 순서대로 정렬 (코덱스 -> 안티그래비티 -> 클로드)

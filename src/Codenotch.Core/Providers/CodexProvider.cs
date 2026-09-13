@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Codenotch.Core.Interfaces;
 using Codenotch.Core.Models;
+using Codenotch.Core.Services;
 
 namespace Codenotch.Core.Providers;
 
@@ -24,6 +25,11 @@ public class CodexProvider : IUsageProvider
     {
         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return Path.Combine(userProfile, ".codex", "auth.json");
+    }
+
+    public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(AgentProcessMonitor.IsRunning("codex", "codex-cli"));
     }
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)

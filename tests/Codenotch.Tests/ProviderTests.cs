@@ -1,4 +1,7 @@
 using System.Threading.Tasks;
+using System.Threading;
+using Codenotch.Core.Interfaces;
+using Codenotch.Core.Models;
 using Codenotch.Core.Providers;
 using Codenotch.Core.Services;
 using Xunit;
@@ -35,13 +38,43 @@ public class ProviderTests
     }
 
     [Fact]
-    public async Task UsageManager_CollectsAllProviders()
+    public async Task UsageManager_CollectsOnlyRunningProviders()
     {
-        using var manager = new UsageManager();
+        var running = new TestProvider("running", isRunning: true);
+        var stopped = new TestProvider("stopped", isRunning: false);
+        using var manager = new UsageManager(new IUsageProvider[] { running, stopped }, startPolling: false);
         await manager.RefreshAllAsync();
 
-        Assert.NotEmpty(manager.CurrentRecords);
-        Assert.Contains(manager.CurrentRecords, r => r.ProviderId == "antigravity");
-        Assert.Contains(manager.CurrentRecords, r => r.ProviderId == "codex");
+        var record = Assert.Single(manager.CurrentRecords);
+        Assert.Equal("running", record.ProviderId);
+        Assert.True(running.FetchCalled);
+        Assert.False(stopped.FetchCalled);
+    }
+
+    private sealed class TestProvider : IUsageProvider
+    {
+        private readonly bool _isRunning;
+
+        public TestProvider(string id, bool isRunning)
+        {
+            Id = id;
+            _isRunning = isRunning;
+        }
+
+        public string Id { get; }
+        public string DisplayName => Id;
+        public string BrandColor => "#000000";
+        public string Glyph => "T";
+        public int Priority => 99;
+        public bool FetchCalled { get; private set; }
+
+        public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default) => Task.FromResult(_isRunning);
+        public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public Task<UsageRecord> FetchUsageAsync(CancellationToken cancellationToken = default)
+        {
+            FetchCalled = true;
+            return Task.FromResult(new UsageRecord { ProviderId = Id, DisplayName = DisplayName });
+        }
     }
 }
