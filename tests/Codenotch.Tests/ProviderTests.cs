@@ -19,6 +19,9 @@ public class ProviderTests
         Assert.NotNull(usage);
         Assert.Equal("antigravity", usage.ProviderId);
         Assert.True(usage.PrimaryUsedPercentage >= 0);
+        Assert.NotEmpty(usage.SubWindows);
+        Assert.Equal("5시간 모델 한도", usage.SubWindows[0].Label);
+        Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
         System.Console.WriteLine($"ANTIGRAVITY USAGE: 5h={usage.PrimaryRemainingPercentage}% 남음 ({usage.ResetTimeText}), SubWindows count={usage.SubWindows.Count}");
         foreach (var sw in usage.SubWindows)
         {
@@ -34,6 +37,9 @@ public class ProviderTests
 
         Assert.NotNull(usage);
         Assert.Equal("codex", usage.ProviderId);
+        Assert.NotEmpty(usage.SubWindows);
+        Assert.Equal("5시간 사용 제한", usage.SubWindows[0].Label);
+        Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
         System.Console.WriteLine($"CODEX USAGE: isConnected={usage.IsConnected}, used={usage.PrimaryUsedPercentage}, status={usage.PrimaryStatusText}, subwindows={usage.SubWindows.Count}");
     }
 

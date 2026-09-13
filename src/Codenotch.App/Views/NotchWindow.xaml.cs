@@ -302,6 +302,11 @@ public partial class NotchWindow : Window
 
     private RingGaugeControl CreateRingControl(UsageRecord rec)
     {
+        var primaryQuota = rec.SubWindows.Count > 0 ? rec.SubWindows[0] : null;
+        var primaryUsed = primaryQuota?.UsedPercentage ?? rec.PrimaryUsedPercentage;
+        var primaryRemaining = Math.Max(0, 100.0 - primaryUsed);
+        var primaryReset = primaryQuota?.ResetsInText ?? rec.ResetTimeText;
+
         var ring = new RingGaugeControl
         {
             Width = 32,
@@ -309,7 +314,7 @@ public partial class NotchWindow : Window
             Margin = new Thickness(0, 4, 0, 4),
             Cursor = Cursors.Hand,
             ToolTip = rec.IsConnected
-                ? $"{rec.DisplayName} ({rec.PlanName})\n{rec.PrimaryRemainingPercentage:F0}% 남음 ({rec.PrimaryUsedPercentage:F0}% 사용됨)\n{rec.ResetTimeText}"
+                ? $"{rec.DisplayName} ({rec.PlanName})\n{primaryRemaining:F0}% 남음 ({primaryUsed:F0}% 사용됨)\n{primaryReset}"
                 : $"{rec.DisplayName} (미연결)\n활성 세션이 없습니다.\n{rec.ConnectionHint}"
         };
         ring.UpdateData(rec);
@@ -365,21 +370,25 @@ public partial class NotchWindow : Window
         PrimaryBarFill.Background = brandBrush;
         SecondaryBarFill.Background = brandBrush;
 
-        // 1. 5시간 사용 제한 (Primary Window)
-        double primaryRemaining = Math.Clamp(record.PrimaryRemainingPercentage, 0, 100);
-        TxtPrimaryUsage.Text = $"{primaryRemaining:F0}% 남음 · {record.PrimaryUsedPercentage:F0}% 사용됨";
-        TxtPrimaryReset.Text = record.ResetTimeText;
-        TxtPrimaryLabel.Text = record.SubWindows.Count > 0 ? record.SubWindows[0].Label : "5시간 사용 제한";
+        // Keep the compact dock, primary label, text and bar on exactly the
+        // same quota object. This avoids a stale PrimaryUsedPercentage being
+        // paired with a freshly refreshed SubWindows label.
+        var primary = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
+        var primaryUsed = Math.Clamp(primary?.UsedPercentage ?? record.PrimaryUsedPercentage, 0, 100);
+        var primaryRemaining = Math.Max(0, 100.0 - primaryUsed);
+        TxtPrimaryUsage.Text = $"{primaryRemaining:F0}% 남음 · {primaryUsed:F0}% 사용됨";
+        TxtPrimaryReset.Text = primary?.ResetsInText ?? record.ResetTimeText;
+        TxtPrimaryLabel.Text = primary?.Label ?? "5시간 사용 제한";
 
         // 2. 주간 사용 제한 (Secondary Window - 함께 전부 다 표시!)
-        if (record.SubWindows.Count > 1)
+        var secondary = record.SubWindows.Count > 1 ? record.SubWindows[1] : null;
+        if (secondary != null)
         {
             SecondarySection.Visibility = Visibility.Visible;
-            var sec = record.SubWindows[1];
-            double secRemaining = Math.Clamp(sec.RemainingPercentage, 0, 100);
-            TxtSecondaryLabel.Text = sec.Label;
-            TxtSecondaryUsage.Text = $"{secRemaining:F0}% 남음 · {sec.UsedPercentage:F0}% 사용됨";
-            TxtSecondaryReset.Text = sec.ResetsInText;
+            double secRemaining = Math.Clamp(secondary.RemainingPercentage, 0, 100);
+            TxtSecondaryLabel.Text = secondary.Label;
+            TxtSecondaryUsage.Text = $"{secRemaining:F0}% 남음 · {secondary.UsedPercentage:F0}% 사용됨";
+            TxtSecondaryReset.Text = secondary.ResetsInText;
         }
         else
         {
@@ -410,16 +419,23 @@ public partial class NotchWindow : Window
             return;
         }
 
+        var primary = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
+        var primaryUsed = primary?.UsedPercentage ?? record.PrimaryUsedPercentage;
         var primaryWidth = PrimaryBarContainer.ActualWidth;
         if (primaryWidth > 0)
         {
-            PrimaryBarFill.Width = primaryWidth * Math.Clamp(record.PrimaryUsedPercentage, 0, 100) / 100.0;
+            PrimaryBarFill.Width = primaryWidth * Math.Clamp(primaryUsed, 0, 100) / 100.0;
         }
 
-        if (record.SubWindows.Count > 1 && SecondaryBarContainer.ActualWidth > 0)
+        var secondary = record.SubWindows.Count > 1 ? record.SubWindows[1] : null;
+        if (secondary != null && SecondaryBarContainer.ActualWidth > 0)
         {
             SecondaryBarFill.Width = SecondaryBarContainer.ActualWidth *
-                Math.Clamp(record.SubWindows[1].UsedPercentage, 0, 100) / 100.0;
+                Math.Clamp(secondary.UsedPercentage, 0, 100) / 100.0;
+        }
+        else if (secondary == null)
+        {
+            SecondaryBarFill.Width = 0;
         }
     }
 

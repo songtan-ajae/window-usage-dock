@@ -41,7 +41,11 @@ public partial class RingGaugeControl : WpfUserControl
     public void UpdateData(UsageRecord record)
     {
         _glyph = record.Glyph;
-        _usedPercentage = Math.Clamp(record.PrimaryUsedPercentage, 0.0, 100.0);
+        // The compact dock must always mirror the first quota shown in the
+        // expanded view (the short / 5-hour window).  Providers that only
+        // expose a single aggregate quota still fall back to the legacy field.
+        var primaryQuota = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
+        _usedPercentage = Math.Clamp(primaryQuota?.UsedPercentage ?? record.PrimaryUsedPercentage, 0.0, 100.0);
         _isConnected = record.IsConnected;
         _status = record.Status;
 
