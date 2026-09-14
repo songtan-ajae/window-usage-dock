@@ -26,7 +26,8 @@ namespace Codenotch.App.Controls;
 
 public partial class RingGaugeControl : WpfUserControl
 {
-    // Usage percentage (0% -> 100% increasing), shared with the detail bar.
+    // Remaining quota (100% -> 0% decreasing), shared with the detail bar.
+    private double _remainingPercentage;
     private double _usedPercentage;
     private string _glyph = "AI";
     private bool _isConnected = true;
@@ -46,6 +47,7 @@ public partial class RingGaugeControl : WpfUserControl
         // expose a single aggregate quota still fall back to the legacy field.
         var primaryQuota = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
         _usedPercentage = Math.Clamp(primaryQuota?.UsedPercentage ?? record.PrimaryUsedPercentage, 0.0, 100.0);
+        _remainingPercentage = Math.Max(0.0, 100.0 - _usedPercentage);
         _isConnected = record.IsConnected;
         _status = record.Status;
 
@@ -94,8 +96,8 @@ public partial class RingGaugeControl : WpfUserControl
         trackPen.Freeze();
         dc.DrawEllipse(null, trackPen, center, radius, radius);
 
-        // 2. Used Progress Arc (0% -> 100% increasing)
-        if (_isConnected && _usedPercentage > 0.5)
+        // 2. Remaining quota arc (100% -> 0% decreasing)
+        if (_isConnected && _remainingPercentage > 0.5)
         {
             var progressPen = new Pen(_brandBrush, strokeThickness)
             {
@@ -104,14 +106,14 @@ public partial class RingGaugeControl : WpfUserControl
             };
             progressPen.Freeze();
 
-            if (_usedPercentage >= 99.5)
+            if (_remainingPercentage >= 99.5)
             {
-                // Full Circle (100% used)
+                // Full circle: a fresh quota is entirely available.
                 dc.DrawEllipse(null, progressPen, center, radius, radius);
             }
             else
             {
-                double angle = (_usedPercentage / 100.0) * 360.0;
+                double angle = (_remainingPercentage / 100.0) * 360.0;
                 double rad = (angle - 90.0) * Math.PI / 180.0;
 
                 Point startPoint = new Point(center.X, center.Y - radius);

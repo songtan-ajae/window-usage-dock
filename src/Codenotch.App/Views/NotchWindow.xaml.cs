@@ -421,17 +421,18 @@ public partial class NotchWindow : Window
 
         var primary = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
         var primaryUsed = primary?.UsedPercentage ?? record.PrimaryUsedPercentage;
+        var primaryRemaining = Math.Max(0, 100.0 - primaryUsed);
         var primaryWidth = PrimaryBarContainer.ActualWidth;
         if (primaryWidth > 0)
         {
-            PrimaryBarFill.Width = primaryWidth * Math.Clamp(primaryUsed, 0, 100) / 100.0;
+            PrimaryBarFill.Width = primaryWidth * primaryRemaining / 100.0;
         }
 
         var secondary = record.SubWindows.Count > 1 ? record.SubWindows[1] : null;
         if (secondary != null && SecondaryBarContainer.ActualWidth > 0)
         {
             SecondaryBarFill.Width = SecondaryBarContainer.ActualWidth *
-                Math.Clamp(secondary.UsedPercentage, 0, 100) / 100.0;
+                Math.Clamp(secondary.RemainingPercentage, 0, 100) / 100.0;
         }
         else if (secondary == null)
         {
