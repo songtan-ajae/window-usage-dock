@@ -11,7 +11,11 @@ namespace Codenotch.Core.Services;
 
 public class UsageManager : IDisposable
 {
+    public const int MaximumSelectedProviders = 5;
     private readonly List<IUsageProvider> _providers = new();
+    private readonly HashSet<string> _selectedProviderIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _selectionGate = new();
+    private readonly bool _persistSettings;
     private readonly Timer _pollTimer;
     private readonly HashSet<string> _notifiedCrossings = new();
     private bool _isRefreshing = false;
@@ -20,6 +24,25 @@ public class UsageManager : IDisposable
     public event Action<string, string>? ThresholdAlertTriggered; // providerName, message
 
     public IReadOnlyList<UsageRecord> CurrentRecords { get; private set; } = Array.Empty<UsageRecord>();
+
+    public IReadOnlyList<UsageProviderOption> AvailableProviders => _providers
+        .Select(provider => new UsageProviderOption
+        {
+            Id = provider.Id,
+            DisplayName = provider.DisplayName,
+            Glyph = provider.Glyph
+        })
+        .OrderBy(provider => GetProviderPriority(provider.Id))
+        .ToList();
+
+    public IReadOnlyList<string> SelectedProviderIds
+    {
+        get
+        {
+            lock (_selectionGate)
+                return _selectedProviderIds.ToList();
+        }
+    }
 
     public UsageManager()
         : this(new IUsageProvider[]
@@ -31,9 +54,11 @@ public class UsageManager : IDisposable
     {
     }
 
-    public UsageManager(IEnumerable<IUsageProvider> providers, bool startPolling = true)
+    public UsageManager(IEnumerable<IUsageProvider> providers, bool startPolling = true, bool persistSettings = true)
     {
         _providers.AddRange(providers);
+        _persistSettings = persistSettings;
+        InitializeSelectedProviders(persistSettings ? DockSettingsStore.Load().SelectedProviderIds : Array.Empty<string>());
 
         _pollTimer = new Timer(
             async _ => await RefreshAllAsync(),
@@ -49,7 +74,10 @@ public class UsageManager : IDisposable
 
         try
         {
-            var activeProviders = await Task.WhenAll(_providers.Select(async provider => new
+            var selectedProviderIds = SelectedProviderIds;
+            var activeProviders = await Task.WhenAll(_providers
+                .Where(provider => selectedProviderIds.Contains(provider.Id, StringComparer.OrdinalIgnoreCase))
+                .Select(async provider => new
             {
                 Provider = provider,
                 IsRunning = await provider.IsAgentRunningAsync()
@@ -80,6 +108,43 @@ public class UsageManager : IDisposable
         {
             _isRefreshing = false;
         }
+    }
+
+    public void SetSelectedProviderIds(IEnumerable<string> providerIds)
+    {
+        var selected = NormalizeProviderIds(providerIds);
+        if (selected.Count == 0)
+            throw new ArgumentException("At least one provider must be selected.", nameof(providerIds));
+
+        lock (_selectionGate)
+        {
+            _selectedProviderIds.Clear();
+            foreach (var providerId in selected)
+                _selectedProviderIds.Add(providerId);
+        }
+
+        if (_persistSettings)
+            DockSettingsStore.Save(selected);
+    }
+
+    private void InitializeSelectedProviders(IEnumerable<string> providerIds)
+    {
+        var selected = NormalizeProviderIds(providerIds);
+        if (selected.Count == 0)
+            selected = _providers.Take(MaximumSelectedProviders).Select(provider => provider.Id).ToList();
+
+        foreach (var providerId in selected)
+            _selectedProviderIds.Add(providerId);
+    }
+
+    private List<string> NormalizeProviderIds(IEnumerable<string> providerIds)
+    {
+        var availableIds = new HashSet<string>(_providers.Select(provider => provider.Id), StringComparer.OrdinalIgnoreCase);
+        return providerIds
+            .Where(providerId => !string.IsNullOrWhiteSpace(providerId) && availableIds.Contains(providerId))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(MaximumSelectedProviders)
+            .ToList();
     }
 
     private void CheckThresholds(UsageRecord record)

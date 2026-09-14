@@ -14,6 +14,7 @@ public partial class App : WpfApplication
     private UsageManager? _usageManager;
     private NotchWindow? _notchWindow;
     private Forms.NotifyIcon? _notifyIcon;
+    private Icon? _trayIcon;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -45,17 +46,19 @@ public partial class App : WpfApplication
         {
             try
             {
-                _notifyIcon.Icon = new Icon(iconPath);
+                _trayIcon = new Icon(iconPath);
             }
             catch
             {
-                _notifyIcon.Icon = SystemIcons.Application;
+                _trayIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? string.Empty);
             }
         }
         else
         {
-            _notifyIcon.Icon = SystemIcons.Application;
+            _trayIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? string.Empty);
         }
+
+        _notifyIcon.Icon = _trayIcon ?? SystemIcons.Application;
 
         var contextMenu = new Forms.ContextMenuStrip();
         var itemShow = contextMenu.Items.Add("노치 보이기", null, (s, e) =>
@@ -108,6 +111,7 @@ public partial class App : WpfApplication
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
         }
+        _trayIcon?.Dispose();
         _usageManager?.Dispose();
         Shutdown();
     }
@@ -119,6 +123,7 @@ public partial class App : WpfApplication
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
         }
+        _trayIcon?.Dispose();
         _usageManager?.Dispose();
         base.OnExit(e);
     }

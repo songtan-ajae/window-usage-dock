@@ -57,6 +57,22 @@ public class ProviderTests
         Assert.False(stopped.FetchCalled);
     }
 
+    [Fact]
+    public async Task UsageManager_ShowsOnlySelectedProviders_AndLimitsSelectionToFive()
+    {
+        var providers = Enumerable.Range(1, 6)
+            .Select(index => (IUsageProvider)new TestProvider($"provider-{index}", isRunning: true))
+            .ToArray();
+        using var manager = new UsageManager(providers, startPolling: false, persistSettings: false);
+
+        manager.SetSelectedProviderIds(providers.Select(provider => provider.Id));
+        await manager.RefreshAllAsync();
+
+        Assert.Equal(UsageManager.MaximumSelectedProviders, manager.SelectedProviderIds.Count);
+        Assert.Equal(UsageManager.MaximumSelectedProviders, manager.CurrentRecords.Count);
+        Assert.DoesNotContain(manager.CurrentRecords, record => record.ProviderId == "provider-6");
+    }
+
     private sealed class TestProvider : IUsageProvider
     {
         private readonly bool _isRunning;
