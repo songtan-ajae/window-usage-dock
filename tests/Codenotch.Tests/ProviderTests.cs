@@ -73,6 +73,18 @@ public class ProviderTests
         Assert.DoesNotContain(manager.CurrentRecords, record => record.ProviderId == "provider-6");
     }
 
+    [Fact]
+    public void UsageManager_DefaultConfiguration_OffersFiveAgents()
+    {
+        using var manager = new UsageManager();
+
+        Assert.Equal(5, manager.AvailableProviders.Count);
+        Assert.Equal(
+            new[] { "codex", "antigravity", "claude", "copilot", "cursor" },
+            manager.AvailableProviders.Select(provider => provider.Id));
+        Assert.Equal(5, new DockSettings().SelectedProviderIds.Count);
+    }
+
     private sealed class TestProvider : IUsageProvider
     {
         private readonly bool _isRunning;

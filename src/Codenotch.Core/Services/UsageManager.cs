@@ -49,7 +49,9 @@ public class UsageManager : IDisposable
         {
             new CodexProvider(),
             new AntigravityProvider(),
-            new ClaudeProvider()
+            new ClaudeProvider(),
+            new CopilotProvider(),
+            new CursorProvider()
         })
     {
     }
@@ -176,6 +178,8 @@ public class UsageManager : IDisposable
             "codex" => 1,
             "antigravity" => 2,
             "claude" => 3,
+            "copilot" => 4,
+            "cursor" => 5,
             _ => 99
         };
     }

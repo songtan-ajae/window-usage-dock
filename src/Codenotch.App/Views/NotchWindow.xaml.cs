@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Codenotch.App.Controls;
 using Codenotch.Core.Models;
 using Codenotch.Core.Services;
 
+using WpfButton = System.Windows.Controls.Button;
+using WpfPanel = System.Windows.Controls.Panel;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using Brushes = System.Windows.Media.Brushes;
@@ -31,6 +35,8 @@ public partial class NotchWindow : Window
     private readonly DispatcherTimer _expandTimer;
     private bool _motionInProgress;
     private int _animationId;
+    private readonly Dictionary<string, RingGaugeControl> _compactRings = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, RingGaugeControl> _expandedRings = new(StringComparer.OrdinalIgnoreCase);
 
     private const double CompactWidth = 40.0;
     private const double CompactHeight = 136.0;
@@ -103,7 +109,10 @@ public partial class NotchWindow : Window
 
     private void NotchWindow_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.LeftButton == MouseButtonState.Pressed)
+        // Interactive controls own their click. Starting a drag from a button
+        // makes the transparent HWND move and can interrupt the hover motion.
+        if (e.LeftButton == MouseButtonState.Pressed &&
+            FindVisualParent<WpfButton>(e.OriginalSource as DependencyObject) == null)
         {
             _isDraggingVertical = true;
             _dragStartScreenPoint = PointToScreen(e.GetPosition(this));
@@ -201,6 +210,7 @@ public partial class NotchWindow : Window
             Height = targetHeight;
             Left = targetLeft;
 
+            CompactView.Visibility = Visibility.Collapsed;
             ExpandedContent.Visibility = Visibility.Visible;
             ExpandedContent.Opacity = 0;
             ExpandedScale.ScaleX = 0.96;
@@ -265,17 +275,8 @@ public partial class NotchWindow : Window
         Dispatcher.BeginInvoke(() =>
         {
             _latestRecords = snapshot;
-            VerticalRingsPanel.Children.Clear();
-            ExpandedRingsPanel.Children.Clear();
-
-            foreach (var rec in snapshot)
-            {
-                var ringCompact = CreateRingControl(rec);
-                VerticalRingsPanel.Children.Add(ringCompact);
-
-                var ringExpanded = CreateRingControl(rec);
-                ExpandedRingsPanel.Children.Add(ringExpanded);
-            }
+            SyncRingPanel(VerticalRingsPanel, _compactRings, snapshot);
+            SyncRingPanel(ExpandedRingsPanel, _expandedRings, snapshot);
 
             if (!_isExpanded)
             {
@@ -312,37 +313,98 @@ public partial class NotchWindow : Window
 
     private RingGaugeControl CreateRingControl(UsageRecord rec)
     {
-        var primaryQuota = rec.SubWindows.Count > 0 ? rec.SubWindows[0] : null;
-        var primaryUsed = primaryQuota?.UsedPercentage ?? rec.PrimaryUsedPercentage;
-        var primaryRemaining = Math.Max(0, 100.0 - primaryUsed);
-        var primaryReset = primaryQuota?.ResetsInText ?? rec.ResetTimeText;
-
         var ring = new RingGaugeControl
         {
             Width = 32,
             Height = 32,
             Margin = new Thickness(0, 4, 0, 4),
             Cursor = Cursors.Hand,
-            ToolTip = rec.IsConnected
-                ? $"{rec.DisplayName} ({rec.PlanName})\n{primaryRemaining:F0}% 남음 ({primaryUsed:F0}% 사용됨)\n{primaryReset}"
-                : $"{rec.DisplayName} (미연결)\n활성 세션이 없습니다.\n{rec.ConnectionHint}"
+            Tag = rec.ProviderId
         };
-        ring.UpdateData(rec);
-
-        var captured = rec;
+        UpdateRingControl(ring, rec);
+        var providerId = rec.ProviderId;
 
         ring.MouseEnter += (s, e) =>
         {
-            SelectRecord(captured);
+            SelectLatestRecord(providerId);
         };
 
         ring.MouseLeftButtonUp += (s, e) =>
         {
-            SelectRecord(captured);
+            SelectLatestRecord(providerId);
             e.Handled = true;
         };
 
         return ring;
+    }
+
+    private void SyncRingPanel(
+        WpfPanel panel,
+        Dictionary<string, RingGaugeControl> cache,
+        IReadOnlyList<UsageRecord> records)
+    {
+        var ids = records.Select(record => record.ProviderId).ToArray();
+        var structureChanged = panel.Children.Count != ids.Length ||
+            panel.Children.Cast<RingGaugeControl>().Select(ring => ring.Tag as string)
+                .SequenceEqual(ids, StringComparer.OrdinalIgnoreCase) == false;
+
+        if (structureChanged)
+        {
+            panel.Children.Clear();
+            foreach (var record in records)
+            {
+                if (!cache.TryGetValue(record.ProviderId, out var ring))
+                {
+                    ring = CreateRingControl(record);
+                    cache[record.ProviderId] = ring;
+                }
+
+                panel.Children.Add(ring);
+            }
+
+            var activeIds = ids.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var staleId in cache.Keys.Where(id => !activeIds.Contains(id)).ToList())
+                cache.Remove(staleId);
+        }
+
+        foreach (var record in records)
+        {
+            if (cache.TryGetValue(record.ProviderId, out var ring))
+                UpdateRingControl(ring, record);
+        }
+    }
+
+    private static void UpdateRingControl(RingGaugeControl ring, UsageRecord record)
+    {
+        var primaryQuota = record.SubWindows.Count > 0 ? record.SubWindows[0] : null;
+        var primaryUsed = primaryQuota?.UsedPercentage ?? record.PrimaryUsedPercentage;
+        var primaryRemaining = Math.Max(0, 100.0 - primaryUsed);
+        var primaryReset = primaryQuota?.ResetsInText ?? record.ResetTimeText;
+        ring.ToolTip = record.IsConnected
+            ? $"{record.DisplayName} ({record.PlanName})\n{primaryRemaining:F0}% 남음 ({primaryUsed:F0}% 사용됨)\n{primaryReset}"
+            : $"{record.DisplayName} (미연결)\n활성 세션이 없습니다.\n{record.ConnectionHint}";
+        ring.UpdateData(record);
+    }
+
+    private void SelectLatestRecord(string providerId)
+    {
+        var record = _latestRecords.FirstOrDefault(candidate =>
+            string.Equals(candidate.ProviderId, providerId, StringComparison.OrdinalIgnoreCase));
+        if (record != null)
+            SelectRecord(record);
+    }
+
+    private static T? FindVisualParent<T>(DependencyObject? child)
+        where T : DependencyObject
+    {
+        while (child != null)
+        {
+            if (child is T match)
+                return match;
+            child = VisualTreeHelper.GetParent(child);
+        }
+
+        return null;
     }
 
     private void SelectRecord(UsageRecord record)
