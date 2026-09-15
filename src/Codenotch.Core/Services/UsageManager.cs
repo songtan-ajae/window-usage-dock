@@ -18,7 +18,7 @@ public class UsageManager : IDisposable
     private readonly bool _persistSettings;
     private readonly Timer _pollTimer;
     private readonly HashSet<string> _notifiedCrossings = new();
-    private bool _isRefreshing = false;
+    private int _isRefreshing;
 
     public event Action<IReadOnlyList<UsageRecord>>? UsageUpdated;
     public event Action<string, string>? ThresholdAlertTriggered; // providerName, message
@@ -69,8 +69,7 @@ public class UsageManager : IDisposable
 
     public async Task RefreshAllAsync()
     {
-        if (_isRefreshing) return;
-        _isRefreshing = true;
+        if (Interlocked.Exchange(ref _isRefreshing, 1) != 0) return;
 
         try
         {
@@ -106,7 +105,7 @@ public class UsageManager : IDisposable
         catch { }
         finally
         {
-            _isRefreshing = false;
+            Volatile.Write(ref _isRefreshing, 0);
         }
     }
 

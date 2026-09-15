@@ -176,7 +176,10 @@ public partial class NotchWindow : Window
         _motionInProgress = true;
 
         var targetWidth = expand ? ExpandedWidth : CompactWidth;
-        var targetHeight = expand ? ExpandedHeight : CompactHeight;
+        var visibleAgentCount = Math.Min(_latestRecords.Count, UsageManager.MaximumSelectedProviders);
+        var targetHeight = expand
+            ? Math.Max(ExpandedHeight, visibleAgentCount * 40.0 + 16.0)
+            : Math.Max(CompactHeight, visibleAgentCount * 40.0 + 12.0);
 
         var workArea = SystemParameters.WorkArea;
         var targetLeft = workArea.Right - targetWidth;
@@ -258,13 +261,14 @@ public partial class NotchWindow : Window
 
     private void OnUsageUpdated(IReadOnlyList<UsageRecord> records)
     {
-        Dispatcher.Invoke(() =>
+        var snapshot = records.Take(UsageManager.MaximumSelectedProviders).ToList();
+        Dispatcher.BeginInvoke(() =>
         {
-            _latestRecords = records;
+            _latestRecords = snapshot;
             VerticalRingsPanel.Children.Clear();
             ExpandedRingsPanel.Children.Clear();
 
-            foreach (var rec in records.Take(3))
+            foreach (var rec in snapshot)
             {
                 var ringCompact = CreateRingControl(rec);
                 VerticalRingsPanel.Children.Add(ringCompact);
@@ -273,14 +277,20 @@ public partial class NotchWindow : Window
                 ExpandedRingsPanel.Children.Add(ringExpanded);
             }
 
-            if (records.Count == 0)
+            if (!_isExpanded)
+            {
+                Height = Math.Max(CompactHeight, snapshot.Count * 40.0 + 12.0);
+                PositionAtRightEdge();
+            }
+
+            if (snapshot.Count == 0)
             {
                 _selectedRecord = null;
                 ShowNoActiveAgentsState();
             }
             else if (_selectedRecord != null)
             {
-                var updated = records.FirstOrDefault(r => r.ProviderId == _selectedRecord.ProviderId);
+                var updated = snapshot.FirstOrDefault(r => r.ProviderId == _selectedRecord.ProviderId);
                 if (updated != null)
                 {
                     SelectRecord(updated);
@@ -288,12 +298,12 @@ public partial class NotchWindow : Window
                 else
                 {
                     _selectedRecord = null;
-                    SelectRecord(records[0]);
+                    SelectRecord(snapshot[0]);
                 }
             }
             else
             {
-                SelectRecord(records[0]);
+                SelectRecord(snapshot[0]);
             }
 
             TxtLastUpdated.Text = $"{DateTime.Now:tt h:mm:ss} 갱신됨";
