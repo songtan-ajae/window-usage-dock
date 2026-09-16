@@ -29,7 +29,7 @@ public class CodexProvider : IUsageProvider
 
     public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(AgentProcessMonitor.IsRunning("codex", "codex-cli"));
+        return Task.FromResult(AgentProcessMonitor.IsCodexCliRunning());
     }
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
@@ -79,8 +79,6 @@ public class CodexProvider : IUsageProvider
             record.PrimaryStatusText = "코덱스 로그인 필요";
             return record;
         }
-
-        record.IsConnected = true;
 
         // 실제 ChatGPT Backend Wham API 호출하여 실시간 쿼터 획득!
         try
@@ -143,31 +141,19 @@ public class CodexProvider : IUsageProvider
                         });
                     }
 
-                    return record;
+                    if (record.SubWindows.Count > 0)
+                    {
+                        record.IsConnected = true;
+                        return record;
+                    }
                 }
             }
         }
         catch { }
 
-        // Fallback (API 실패 시)
-        record.PrimaryUsedPercentage = 67.0; // 33% 남음
-        record.PrimaryStatusText = "33% 남음 · 67% 사용됨";
-        record.ResetTimeText = "3시간 56분 후 갱신";
-        record.SubWindows.Add(new UsageQuotaWindow
-        {
-            Label = "5시간 사용 제한",
-            UsedPercentage = 67.0,
-            UsedText = "33% 남음 (67% 소진)",
-            ResetsInText = "3시간 56분 후 갱신"
-        });
-        record.SubWindows.Add(new UsageQuotaWindow
-        {
-            Label = "주간 사용 제한",
-            UsedPercentage = 43.0,
-            UsedText = "57% 남음 (43% 소진)",
-            ResetsInText = "4일 후 갱신"
-        });
-
+        record.PrimaryStatusText = "실시간 사용량을 불러오지 못했습니다";
+        record.ResetTimeText = "새로고침 후 다시 확인";
+        record.ConnectionHint = "Codex CLI 로그인 상태와 네트워크 연결을 확인하세요.";
         return record;
     }
 

@@ -19,9 +19,17 @@ public class ProviderTests
         Assert.NotNull(usage);
         Assert.Equal("antigravity", usage.ProviderId);
         Assert.True(usage.PrimaryUsedPercentage >= 0);
-        Assert.NotEmpty(usage.SubWindows);
-        Assert.Equal("5시간 모델 한도", usage.SubWindows[0].Label);
-        Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
+        if (usage.IsConnected)
+        {
+            Assert.NotEmpty(usage.SubWindows);
+            Assert.Equal("5시간 모델 한도", usage.SubWindows[0].Label);
+            Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
+        }
+        else
+        {
+            Assert.Empty(usage.SubWindows);
+            Assert.Contains("불러오지 못", usage.PrimaryStatusText);
+        }
         System.Console.WriteLine($"ANTIGRAVITY USAGE: 5h={usage.PrimaryRemainingPercentage}% 남음 ({usage.ResetTimeText}), SubWindows count={usage.SubWindows.Count}");
         foreach (var sw in usage.SubWindows)
         {
