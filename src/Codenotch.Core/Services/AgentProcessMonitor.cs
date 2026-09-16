@@ -82,10 +82,16 @@ public static class AgentProcessMonitor
         var antigravityLogs = Path.Combine(appData, "Antigravity", "logs");
         var geminiHome = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gemini");
+        var antigravityCliHome = Path.Combine(geminiHome, "antigravity-cli");
 
         return HasRecentWrite(Path.Combine(antigravityLogs, "main.log"), TimeSpan.FromMinutes(20))
             || HasRecentWrite(Path.Combine(antigravityLogs, "language_server.log"), TimeSpan.FromMinutes(20))
-            || HasRecentWrite(Path.Combine(geminiHome, "history.json"), TimeSpan.FromMinutes(20));
+            || HasRecentWrite(Path.Combine(geminiHome, "history.json"), TimeSpan.FromMinutes(20))
+            // Antigravity CLI stores its live conversation index here instead of
+            // Gemini CLI's history.json. Keep this signal longer than the
+            // desktop heartbeat so an open, idle terminal is not dropped.
+            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversation_summaries.db"), TimeSpan.FromHours(2))
+            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversations"), TimeSpan.FromHours(2));
     }
 
     private static bool HasRecentWrite(string path, TimeSpan maxAge)
