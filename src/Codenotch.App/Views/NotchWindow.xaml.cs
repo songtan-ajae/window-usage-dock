@@ -415,13 +415,17 @@ public partial class NotchWindow : Window
 
         if (!record.IsConnected)
         {
-            TxtBadgePlan.Text = "미연결";
-            BadgePlan.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-            TxtPrimaryLabel.Text = "연결 상태";
-            TxtPrimaryReset.Text = "로그인 대기";
+            var sessionDetected = record.Status == SessionStatus.Working;
+            TxtBadgePlan.Text = sessionDetected ? "세션 감지됨" : "미연결";
+            BadgePlan.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(
+                sessionDetected ? "#1D4ED8" : "#374151"));
+            TxtPrimaryLabel.Text = "사용량 상태";
+            TxtPrimaryReset.Text = record.ResetTimeText;
             PrimaryBarFill.Width = 0;
             SecondaryBarFill.Width = 0;
-            TxtPrimaryUsage.Text = "활성 세션 없음 · 터미널에서 `claude` 로그인 필요";
+            TxtPrimaryUsage.Text = string.IsNullOrWhiteSpace(record.ConnectionHint)
+                ? record.PrimaryStatusText
+                : $"{record.PrimaryStatusText} · {record.ConnectionHint}";
             SecondarySection.Visibility = Visibility.Collapsed;
             return;
         }

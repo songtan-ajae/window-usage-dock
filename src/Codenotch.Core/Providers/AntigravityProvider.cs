@@ -52,17 +52,18 @@ public class AntigravityProvider : IUsageProvider
 
     public async Task<UsageRecord> FetchUsageAsync(CancellationToken cancellationToken = default)
     {
+        var cliSessionDetected = AgentProcessMonitor.IsAntigravityOrGeminiRunning();
         var record = new UsageRecord
         {
             ProviderId = Id,
             DisplayName = DisplayName,
             BrandColor = BrandColor,
             Glyph = Glyph,
-            PlanName = "Google AI Pro",
+            PlanName = cliSessionDetected ? "Antigravity CLI" : "Google AI Pro",
             IsConnected = false,
             PrimaryStatusText = "실시간 사용량을 확인하는 중",
             ResetTimeText = "새로고침 후 다시 확인",
-            Status = SessionStatus.Idle
+            Status = cliSessionDetected ? SessionStatus.Working : SessionStatus.Idle
         };
 
         // 1. Antigravity 실행 중인 Language Server(HTTPS) 실시간 조회 시도
@@ -84,8 +85,12 @@ public class AntigravityProvider : IUsageProvider
         if (FetchFromStatuslineFallback(record))
             return record;
 
-        record.PrimaryStatusText = "실시간 사용량을 불러오지 못했습니다";
-        record.ConnectionHint = "Antigravity 또는 Gemini CLI 로그인 상태를 확인하세요.";
+        record.PrimaryStatusText = cliSessionDetected
+            ? "Antigravity CLI 세션 감지됨 · 사용량을 불러오지 못했습니다"
+            : "실시간 사용량을 불러오지 못했습니다";
+        record.ConnectionHint = cliSessionDetected
+            ? "CLI가 제공하는 사용량 정보를 기다리는 중입니다."
+            : "Antigravity 또는 Gemini CLI 로그인 상태를 확인하세요.";
 
         return record;
     }
