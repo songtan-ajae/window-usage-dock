@@ -91,7 +91,12 @@ public static class AgentProcessMonitor
             // Gemini CLI's history.json. Keep this signal longer than the
             // desktop heartbeat so an open, idle terminal is not dropped.
             || HasRecentWrite(Path.Combine(antigravityCliHome, "conversation_summaries.db"), TimeSpan.FromHours(2))
-            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversations"), TimeSpan.FromHours(2));
+            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversations"), TimeSpan.FromHours(2))
+            // The CLI is hosted by a generic Node process, which cannot be
+            // distinguished safely by name. Its persisted local session is
+            // therefore the durable availability signal for a user-selected
+            // Antigravity entry.
+            || Directory.Exists(antigravityCliHome);
     }
 
     private static bool HasRecentWrite(string path, TimeSpan maxAge)
