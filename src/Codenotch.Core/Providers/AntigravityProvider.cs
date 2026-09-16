@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -242,7 +243,12 @@ public class AntigravityProvider : IUsageProvider
             fs.Seek(seekPos, SeekOrigin.Begin);
             using var reader = new StreamReader(fs);
             var content = reader.ReadToEnd();
-            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            // Older statusline-helper builds copied JSON chunks without a
+            // trailing newline. Accept both normal JSONL and concatenated JSON
+            // objects so existing quota history remains usable after upgrade.
+            var lines = Regex.Split(content, @"(?<=\})(?=\s*\{)|\r?\n")
+                .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                .ToArray();
 
             for (int i = lines.Length - 1; i >= 0; i--)
             {
