@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -38,7 +39,7 @@ public class AntigravityProvider : IUsageProvider
 
     public Task<bool> IsAgentRunningAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(AgentProcessMonitor.IsRunning("antigravity"));
+        return Task.FromResult(AgentProcessMonitor.IsAntigravityOrGeminiRunning());
     }
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
@@ -52,18 +53,18 @@ public class AntigravityProvider : IUsageProvider
 
     public async Task<UsageRecord> FetchUsageAsync(CancellationToken cancellationToken = default)
     {
+        var cliSessionDetected = AgentProcessMonitor.IsAntigravityOrGeminiRunning();
         var record = new UsageRecord
         {
             ProviderId = Id,
             DisplayName = DisplayName,
             BrandColor = BrandColor,
             Glyph = Glyph,
-            PlanName = "Google AI Pro",
-            IsConnected = true,
-            PrimaryUsedPercentage = 26.0,
-            PrimaryStatusText = "74% 남음 · 26% 사용됨",
-            ResetTimeText = "3시간 후 갱신",
-            Status = SessionStatus.Working
+            PlanName = cliSessionDetected ? "Antigravity CLI" : "Google AI Pro",
+            IsConnected = false,
+            PrimaryStatusText = "실시간 사용량을 확인하는 중",
+            ResetTimeText = "새로고침 후 다시 확인",
+            Status = cliSessionDetected ? SessionStatus.Working : SessionStatus.Idle
         };
 
         // 1. Antigravity 실행 중인 Language Server(HTTPS) 실시간 조회 시도
@@ -82,7 +83,15 @@ public class AntigravityProvider : IUsageProvider
         catch { }
 
         // 2. Language Server 미실행 시 statusline.jsonl 폴백 조회
-        FetchFromStatuslineFallback(record);
+        if (FetchFromStatuslineFallback(record))
+            return record;
+
+        record.PrimaryStatusText = cliSessionDetected
+            ? "Antigravity CLI 세션 감지됨 · 사용량을 불러오지 못했습니다"
+            : "실시간 사용량을 불러오지 못했습니다";
+        record.ConnectionHint = cliSessionDetected
+            ? "CLI가 제공하는 사용량 정보를 기다리는 중입니다."
+            : "Antigravity 또는 Gemini CLI 로그인 상태를 확인하세요.";
 
         return record;
     }
@@ -148,6 +157,8 @@ public class AntigravityProvider : IUsageProvider
                 double used5 = Math.Clamp(100.0 - r5, 0, 100);
 
                 record.PrimaryUsedPercentage = used5;
+                record.IsConnected = true;
+                record.Status = SessionStatus.Working;
                 record.PrimaryStatusText = $"{r5:F0}% 남음 · {used5:F0}% 사용됨";
                 record.ResetTimeText = reset5hText;
 
@@ -218,10 +229,12 @@ public class AntigravityProvider : IUsageProvider
         catch { }
     }
 
-    private void FetchFromStatuslineFallback(UsageRecord record)
+    private bool FetchFromStatuslineFallback(UsageRecord record)
     {
-        var slPath = @"C:\Users\min\gemini-usage-monitor\data\statusline.jsonl";
-        if (!File.Exists(slPath)) return;
+        var slPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "gemini-usage-monitor", "data", "statusline.jsonl");
+        if (!File.Exists(slPath)) return false;
 
         try
         {
@@ -230,7 +243,12 @@ public class AntigravityProvider : IUsageProvider
             fs.Seek(seekPos, SeekOrigin.Begin);
             using var reader = new StreamReader(fs);
             var content = reader.ReadToEnd();
-            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            // Older statusline-helper builds copied JSON chunks without a
+            // trailing newline. Accept both normal JSONL and concatenated JSON
+            // objects so existing quota history remains usable after upgrade.
+            var lines = Regex.Split(content, @"(?<=\})(?=\s*\{)|\r?\n")
+                .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                .ToArray();
 
             for (int i = lines.Length - 1; i >= 0; i--)
             {
@@ -243,19 +261,22 @@ public class AntigravityProvider : IUsageProvider
                     var root = doc.RootElement;
                     if (root.TryGetProperty("quota", out var qElem))
                     {
-                        double rem5 = 74.0;
-                        double remW = 95.0;
-                        if (qElem.TryGetProperty("gemini-5h", out var g5))
-                        {
-                            rem5 = Math.Round(g5.GetProperty("remaining_fraction").GetDouble() * 100.0, 0);
-                        }
+                        if (!qElem.TryGetProperty("gemini-5h", out var g5) ||
+                            !g5.TryGetProperty("remaining_fraction", out var rem5Element))
+                            continue;
+
+                        double rem5 = Math.Round(rem5Element.GetDouble() * 100.0, 0);
+                        double? remW = null;
                         if (qElem.TryGetProperty("gemini-weekly", out var gw))
                         {
-                            remW = Math.Round(gw.GetProperty("remaining_fraction").GetDouble() * 100.0, 0);
+                            if (gw.TryGetProperty("remaining_fraction", out var remWeeklyElement))
+                                remW = Math.Round(remWeeklyElement.GetDouble() * 100.0, 0);
                         }
 
                         double used5 = 100.0 - rem5;
                         record.PrimaryUsedPercentage = used5;
+                        record.IsConnected = true;
+                        record.Status = SessionStatus.Working;
                         record.PrimaryStatusText = $"{rem5:F0}% 남음 · {used5:F0}% 사용됨";
 
                         record.SubWindows.Clear();
@@ -266,20 +287,25 @@ public class AntigravityProvider : IUsageProvider
                             UsedText = $"{rem5:F0}% 남음 ({used5:F0}% 사용됨)",
                             ResetsInText = record.ResetTimeText
                         });
-                        record.SubWindows.Add(new UsageQuotaWindow
+                        if (remW.HasValue)
                         {
-                            Label = "주간 쿼터 한도",
-                            UsedPercentage = 100.0 - remW,
-                            UsedText = $"{remW:F0}% 남음 ({100.0 - remW:F0}% 사용됨)",
-                            ResetsInText = "진행 중"
-                        });
-                        break;
+                            record.SubWindows.Add(new UsageQuotaWindow
+                            {
+                                Label = "주간 쿼터 한도",
+                                UsedPercentage = 100.0 - remW.Value,
+                                UsedText = $"{remW.Value:F0}% 남음 ({100.0 - remW.Value:F0}% 사용됨)",
+                                ResetsInText = "진행 중"
+                            });
+                        }
+                        return true;
                     }
                 }
                 catch { }
             }
         }
         catch { }
+
+        return false;
     }
 
     private static (int Port, string CsrfToken) DiscoverLanguageServer()

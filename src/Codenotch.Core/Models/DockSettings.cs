@@ -8,7 +8,14 @@ namespace Codenotch.Core.Models;
 
 public sealed class DockSettings
 {
-    public List<string> SelectedProviderIds { get; set; } = new() { "codex", "antigravity", "claude" };
+    public List<string> SelectedProviderIds { get; set; } = new()
+    {
+        "codex",
+        "antigravity",
+        "claude",
+        "copilot",
+        "cursor"
+    };
 }
 
 public sealed class UsageProviderOption

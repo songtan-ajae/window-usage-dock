@@ -19,9 +19,17 @@ public class ProviderTests
         Assert.NotNull(usage);
         Assert.Equal("antigravity", usage.ProviderId);
         Assert.True(usage.PrimaryUsedPercentage >= 0);
-        Assert.NotEmpty(usage.SubWindows);
-        Assert.Equal("5시간 모델 한도", usage.SubWindows[0].Label);
-        Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
+        if (usage.IsConnected)
+        {
+            Assert.NotEmpty(usage.SubWindows);
+            Assert.Equal("5시간 모델 한도", usage.SubWindows[0].Label);
+            Assert.Equal(usage.PrimaryUsedPercentage, usage.SubWindows[0].UsedPercentage);
+        }
+        else
+        {
+            Assert.Empty(usage.SubWindows);
+            Assert.Contains("불러오지 못", usage.PrimaryStatusText);
+        }
         System.Console.WriteLine($"ANTIGRAVITY USAGE: 5h={usage.PrimaryRemainingPercentage}% 남음 ({usage.ResetTimeText}), SubWindows count={usage.SubWindows.Count}");
         foreach (var sw in usage.SubWindows)
         {
@@ -71,6 +79,18 @@ public class ProviderTests
         Assert.Equal(UsageManager.MaximumSelectedProviders, manager.SelectedProviderIds.Count);
         Assert.Equal(UsageManager.MaximumSelectedProviders, manager.CurrentRecords.Count);
         Assert.DoesNotContain(manager.CurrentRecords, record => record.ProviderId == "provider-6");
+    }
+
+    [Fact]
+    public void UsageManager_DefaultConfiguration_OffersFiveAgents()
+    {
+        using var manager = new UsageManager();
+
+        Assert.Equal(5, manager.AvailableProviders.Count);
+        Assert.Equal(
+            new[] { "codex", "antigravity", "claude", "copilot", "cursor" },
+            manager.AvailableProviders.Select(provider => provider.Id));
+        Assert.Equal(5, new DockSettings().SelectedProviderIds.Count);
     }
 
     private sealed class TestProvider : IUsageProvider
