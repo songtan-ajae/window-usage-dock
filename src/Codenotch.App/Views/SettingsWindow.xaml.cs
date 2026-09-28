@@ -20,6 +20,8 @@ public partial class SettingsWindow : Window
     public SettingsWindow(UsageManager usageManager, NotchWindow notchWindow)
     {
         InitializeComponent();
+        MaxHeight = Math.Max(450, SystemParameters.WorkArea.Height - 24);
+        Height = Math.Min(Height, MaxHeight);
         _usageManager = usageManager;
         _notchWindow = notchWindow;
         ChkAlwaysShow.IsChecked = _usageManager.AlwaysExpanded;
@@ -58,7 +60,8 @@ public partial class SettingsWindow : Window
             var statusLabel = new WpfTextBlock
             {
                 FontSize = 10,
-                Foreground = System.Windows.Media.Brushes.Gray,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#AFC1D6")),
                 Margin = new Thickness(30, 1, 0, 0),
                 Text = "실행 감지 대기"
             };
@@ -72,9 +75,9 @@ public partial class SettingsWindow : Window
                 IsChecked = selectedIds.Contains(provider.Id),
                 Foreground = System.Windows.Media.Brushes.White,
                 FontSize = 12,
-                Margin = new Thickness(0, 4, 0, 4),
-                Padding = new Thickness(8, 6, 8, 6),
-                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#16161B"))
+                Margin = new Thickness(0, 3, 0, 3),
+                Padding = new Thickness(10, 7, 10, 7),
+                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#6B34485E"))
             };
             checkBox.Checked += ProviderSelectionChanged;
             checkBox.Unchecked += ProviderSelectionChanged;
@@ -111,19 +114,22 @@ public partial class SettingsWindow : Window
             if (!byId.TryGetValue(providerId, out var record))
             {
                 label.Text = "실행 감지 대기";
-                label.Foreground = System.Windows.Media.Brushes.Gray;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#AFC1D6"));
                 continue;
             }
 
             if (record.IsConnected)
             {
                 label.Text = $"감지됨 · {record.PrimaryRemainingPercentage:F0}% 남음 ({record.PrimaryUsedPercentage:F0}% 사용)";
-                label.Foreground = System.Windows.Media.Brushes.SkyBlue;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#8DC5FF"));
             }
             else
             {
                 label.Text = $"감지됨 · {record.PrimaryStatusText}";
-                label.Foreground = System.Windows.Media.Brushes.Orange;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F9B875"));
             }
         }
     }

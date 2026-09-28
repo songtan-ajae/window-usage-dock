@@ -104,6 +104,26 @@ public class ProviderTests
         Assert.False(settings.AlwaysExpanded);
     }
 
+    [Theory]
+    [InlineData("node C:\\Users\\min\\.gemini\\antigravity-cli\\runner.js", true)]
+    [InlineData("node C:\\tools\\@google\\gemini-cli\\index.js", true)]
+    [InlineData("node C:\\tools\\unrelated-app\\index.js", false)]
+    [InlineData(null, false)]
+    public void AntigravityNodeDetection_RequiresCliProcessCommand(string? commandLine, bool expected)
+    {
+        Assert.Equal(expected, AgentProcessMonitor.IsHostedAntigravityCliCommandLine(commandLine));
+    }
+
+    [Fact]
+    public void AntigravityStatusline_RejectsStaleQuota()
+    {
+        var now = new DateTime(2026, 9, 28, 12, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(AntigravityProvider.IsFreshStatusline(now, now.AddMinutes(-5)));
+        Assert.False(AntigravityProvider.IsFreshStatusline(now, now.AddDays(-5)));
+        Assert.False(AntigravityProvider.IsFreshStatusline(now, now.AddMinutes(5)));
+    }
+
     [Fact]
     public async Task UsageManager_PreferencesControlAlertsWithoutChangingSelection()
     {

@@ -238,6 +238,7 @@ public class AntigravityProvider : IUsageProvider
 
         try
         {
+            if (!IsFreshStatusline(DateTime.UtcNow, File.GetLastWriteTimeUtc(slPath))) return false;
             using var fs = new FileStream(slPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             long seekPos = Math.Max(0, fs.Length - 50000);
             fs.Seek(seekPos, SeekOrigin.Begin);
@@ -371,6 +372,12 @@ public class AntigravityProvider : IUsageProvider
         {
             return (0, string.Empty);
         }
+    }
+
+    internal static bool IsFreshStatusline(DateTime nowUtc, DateTime lastWriteUtc)
+    {
+        var age = nowUtc - lastWriteUtc;
+        return age >= TimeSpan.FromMinutes(-2) && age <= TimeSpan.FromMinutes(10);
     }
 
     private static string FormatTimeLeft(string? isoResetTime)

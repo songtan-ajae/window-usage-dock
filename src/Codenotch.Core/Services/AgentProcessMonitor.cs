@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.IO;
+using System.Management;
 
 namespace Codenotch.Core.Services;
 
@@ -70,33 +71,48 @@ public static class AgentProcessMonitor
     }
 
     /// <summary>
-    /// Antigravity Desktop and Gemini CLI can expose their active quota service
-    /// through different host processes. The local service/log heartbeat is a
-    /// reliable fallback without inspecting process command lines or contents.
+    /// A selected provider belongs in the dock only while its app or CLI is
+    /// running. Persisted session directories and recent logs are not proof of
+    /// a live process after the app has closed.
     /// </summary>
     public static bool IsAntigravityOrGeminiRunning()
     {
-        if (IsRunning("antigravity", "gemini", "gemini-cli", "language_server")) return true;
+        return IsRunning("antigravity", "agy", "gemini", "gemini-cli", "language_server")
+            || IsHostedCliRunning();
+    }
 
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var antigravityLogs = Path.Combine(appData, "Antigravity", "logs");
-        var geminiHome = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gemini");
-        var antigravityCliHome = Path.Combine(geminiHome, "antigravity-cli");
+    private static bool IsHostedCliRunning()
+    {
+        if (!OperatingSystem.IsWindows()) return false;
 
-        return HasRecentWrite(Path.Combine(antigravityLogs, "main.log"), TimeSpan.FromMinutes(20))
-            || HasRecentWrite(Path.Combine(antigravityLogs, "language_server.log"), TimeSpan.FromMinutes(20))
-            || HasRecentWrite(Path.Combine(geminiHome, "history.json"), TimeSpan.FromMinutes(20))
-            // Antigravity CLI stores its live conversation index here instead of
-            // Gemini CLI's history.json. Keep this signal longer than the
-            // desktop heartbeat so an open, idle terminal is not dropped.
-            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversation_summaries.db"), TimeSpan.FromHours(2))
-            || HasRecentWrite(Path.Combine(antigravityCliHome, "conversations"), TimeSpan.FromHours(2))
-            // The CLI is hosted by a generic Node process, which cannot be
-            // distinguished safely by name. Its persisted local session is
-            // therefore the durable availability signal for a user-selected
-            // Antigravity entry.
-            || Directory.Exists(antigravityCliHome);
+        try
+        {
+            // Read command lines locally only to classify generic Node hosts;
+            // never retain or emit their arguments.
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT CommandLine FROM Win32_Process WHERE Name = 'node.exe' OR Name = 'nodejs.exe'");
+            using var processes = searcher.Get();
+            foreach (ManagementObject process in processes)
+            {
+                using (process)
+                {
+                    if (IsHostedAntigravityCliCommandLine(process["CommandLine"] as string))
+                        return true;
+                }
+            }
+        }
+        catch
+        {
+            // WMI may be unavailable or access to a process may be denied.
+        }
+
+        return false;
+    }
+
+    internal static bool IsHostedAntigravityCliCommandLine(string? commandLine)
+    {
+        return commandLine?.Contains("antigravity-cli", StringComparison.OrdinalIgnoreCase) == true
+            || commandLine?.Contains("gemini-cli", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private static bool HasRecentWrite(string path, TimeSpan maxAge)
