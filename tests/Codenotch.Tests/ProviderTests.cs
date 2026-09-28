@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using System.Threading;
+using System.Text.Json;
 using Codenotch.Core.Interfaces;
 using Codenotch.Core.Models;
 using Codenotch.Core.Providers;
@@ -93,14 +94,48 @@ public class ProviderTests
         Assert.Equal(5, new DockSettings().SelectedProviderIds.Count);
     }
 
+    [Fact]
+    public void DockSettings_OlderFilesKeepAlertDefault()
+    {
+        var settings = JsonSerializer.Deserialize<DockSettings>("{\"SelectedProviderIds\":[\"codex\"]}");
+
+        Assert.NotNull(settings);
+        Assert.True(settings.AlertsEnabled);
+        Assert.False(settings.AlwaysExpanded);
+    }
+
+    [Fact]
+    public async Task UsageManager_PreferencesControlAlertsWithoutChangingSelection()
+    {
+        var provider = new TestProvider("test", isRunning: true, usedPercentage: 85);
+        using var manager = new UsageManager(new IUsageProvider[] { provider }, startPolling: false, persistSettings: false);
+        var alertCount = 0;
+        manager.ThresholdAlertTriggered += (_, _) => alertCount++;
+
+        manager.SetPreferences(alwaysExpanded: true, alertsEnabled: false);
+        await manager.RefreshAllAsync();
+        Assert.True(manager.AlwaysExpanded);
+        Assert.False(manager.AlertsEnabled);
+        Assert.Equal(new[] { "test" }, manager.SelectedProviderIds);
+        Assert.Equal(0, alertCount);
+
+        manager.SetPreferences(alwaysExpanded: false, alertsEnabled: true);
+        await manager.RefreshAllAsync();
+        Assert.False(manager.AlwaysExpanded);
+        Assert.True(manager.AlertsEnabled);
+        Assert.Equal(1, alertCount);
+    }
+
     private sealed class TestProvider : IUsageProvider
     {
         private readonly bool _isRunning;
+        private readonly double _usedPercentage;
 
-        public TestProvider(string id, bool isRunning)
+        public TestProvider(string id, bool isRunning, double usedPercentage = 0)
         {
             Id = id;
             _isRunning = isRunning;
+            _usedPercentage = usedPercentage;
         }
 
         public string Id { get; }
@@ -116,7 +151,7 @@ public class ProviderTests
         public Task<UsageRecord> FetchUsageAsync(CancellationToken cancellationToken = default)
         {
             FetchCalled = true;
-            return Task.FromResult(new UsageRecord { ProviderId = Id, DisplayName = DisplayName });
+            return Task.FromResult(new UsageRecord { ProviderId = Id, DisplayName = DisplayName, PrimaryUsedPercentage = _usedPercentage });
         }
     }
 }

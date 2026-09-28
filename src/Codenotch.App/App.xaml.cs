@@ -60,8 +60,16 @@ public partial class App : WpfApplication
 
         _notifyIcon.Icon = _trayIcon ?? SystemIcons.Application;
 
-        var contextMenu = new Forms.ContextMenuStrip();
-        var itemShow = contextMenu.Items.Add("노치 보이기", null, (s, e) =>
+        var contextMenu = new Forms.ContextMenuStrip
+        {
+            BackColor = Color.FromArgb(27, 29, 36),
+            ForeColor = Color.FromArgb(235, 238, 243),
+            ShowImageMargin = false,
+            Renderer = new Forms.ToolStripProfessionalRenderer(new DockMenuColors()),
+            Font = new Font("Segoe UI", 10f),
+            Padding = new Forms.Padding(4)
+        };
+        contextMenu.Items.Add("노치 보이기", null, (s, e) =>
         {
             _notchWindow?.Show();
             _notchWindow?.Activate();
@@ -87,6 +95,14 @@ public partial class App : WpfApplication
         {
             ExitApplication();
         });
+
+        foreach (Forms.ToolStripItem item in contextMenu.Items)
+        {
+            item.BackColor = contextMenu.BackColor;
+            item.ForeColor = contextMenu.ForeColor;
+            if (item is Forms.ToolStripMenuItem)
+                item.Padding = new Forms.Padding(10, 5, 10, 5);
+        }
 
         _notifyIcon.ContextMenuStrip = contextMenu;
         _notifyIcon.DoubleClick += (s, e) =>
@@ -126,5 +142,24 @@ public partial class App : WpfApplication
         _trayIcon?.Dispose();
         _usageManager?.Dispose();
         base.OnExit(e);
+    }
+
+    private sealed class DockMenuColors : Forms.ProfessionalColorTable
+    {
+        private static readonly Color Surface = Color.FromArgb(27, 29, 36);
+        private static readonly Color Hover = Color.FromArgb(48, 54, 66);
+        private static readonly Color Outline = Color.FromArgb(63, 69, 81);
+
+        public override Color ToolStripDropDownBackground => Surface;
+        public override Color MenuBorder => Outline;
+        public override Color MenuItemBorder => Outline;
+        public override Color MenuItemSelected => Hover;
+        public override Color MenuItemSelectedGradientBegin => Hover;
+        public override Color MenuItemSelectedGradientEnd => Hover;
+        public override Color MenuItemPressedGradientBegin => Hover;
+        public override Color MenuItemPressedGradientMiddle => Hover;
+        public override Color MenuItemPressedGradientEnd => Hover;
+        public override Color SeparatorDark => Outline;
+        public override Color SeparatorLight => Outline;
     }
 }

@@ -8,6 +8,9 @@ namespace Codenotch.Core.Models;
 
 public sealed class DockSettings
 {
+    public bool AlwaysExpanded { get; set; }
+    public bool AlertsEnabled { get; set; } = true;
+
     public List<string> SelectedProviderIds { get; set; } = new()
     {
         "codex",
@@ -51,14 +54,10 @@ public static class DockSettingsStore
         return new DockSettings();
     }
 
-    public static void Save(IEnumerable<string> selectedProviderIds)
+    public static void Save(DockSettings settings)
     {
         var directory = Path.GetDirectoryName(SettingsPath)!;
         Directory.CreateDirectory(directory);
-        var settings = new DockSettings
-        {
-            SelectedProviderIds = selectedProviderIds.Distinct(StringComparer.OrdinalIgnoreCase).ToList()
-        };
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
     }
 }

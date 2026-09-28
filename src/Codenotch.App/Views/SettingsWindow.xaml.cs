@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using Codenotch.Core.Services;
 using WpfCheckBox = System.Windows.Controls.CheckBox;
 using WpfTextBlock = System.Windows.Controls.TextBlock;
@@ -20,17 +22,33 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         _usageManager = usageManager;
         _notchWindow = notchWindow;
+        ChkAlwaysShow.IsChecked = _usageManager.AlwaysExpanded;
+        ChkAlerts.IsChecked = _usageManager.AlertsEnabled;
 
         BuildProviderSelector();
+        SourceInitialized += SettingsWindow_SourceInitialized;
         Loaded += SettingsWindow_Loaded;
         Closed += SettingsWindow_Closed;
     }
 
     private void BtnResetPos_Click(object sender, RoutedEventArgs e)
     {
-        _notchWindow.PositionAtRightEdge();
+        _notchWindow.ResetPositionAtRightEdge();
         _notchWindow.Show();
     }
+
+    private void SettingsWindow_SourceInitialized(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var enabled = 1;
+        const int darkModeAttribute = 20;
+        const int legacyDarkModeAttribute = 19;
+        if (DwmSetWindowAttribute(hwnd, darkModeAttribute, ref enabled, sizeof(int)) != 0)
+            DwmSetWindowAttribute(hwnd, legacyDarkModeAttribute, ref enabled, sizeof(int));
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int valueSize);
 
     private void BuildProviderSelector()
     {
@@ -49,6 +67,7 @@ public partial class SettingsWindow : Window
             content.Children.Add(statusLabel);
             var checkBox = new WpfCheckBox
             {
+                Style = (Style)FindResource("DockCheckBox"),
                 Content = content,
                 IsChecked = selectedIds.Contains(provider.Id),
                 Foreground = System.Windows.Media.Brushes.White,
@@ -142,6 +161,8 @@ public partial class SettingsWindow : Window
         }
 
         _usageManager.SetSelectedProviderIds(selectedIds);
+        _usageManager.SetPreferences(ChkAlwaysShow.IsChecked == true, ChkAlerts.IsChecked == true);
+        _notchWindow.SetPinned(ChkAlwaysShow.IsChecked == true);
         await _usageManager.RefreshAllAsync();
         Close();
     }

@@ -41,7 +41,7 @@ public partial class NotchWindow : Window
     private const double CompactWidth = 40.0;
     private const double CompactHeight = 136.0;
     private const double ExpandedWidth = 380.0;
-    private const double ExpandedHeight = 180.0; // 5시간 + 주간 제한 모두 들어가도록 여유 있는 높이
+    private const double ExpandedHeight = 200.0;
     private const int DesiredFps = 60;
 
     // Vertical Drag State
@@ -53,6 +53,7 @@ public partial class NotchWindow : Window
     {
         InitializeComponent();
         _usageManager = usageManager;
+        _isPinned = usageManager.AlwaysExpanded;
 
         Width = CompactWidth;
         Height = CompactHeight;
@@ -90,21 +91,31 @@ public partial class NotchWindow : Window
                 AnimateExpansion(true);
         };
 
+        UpdatePinButton();
+
     }
 
     private void NotchWindow_Loaded(object sender, RoutedEventArgs e)
     {
         PositionAtRightEdge();
+        if (_isPinned) AnimateExpansion(true);
     }
 
-    public void PositionAtRightEdge(double targetWidth = CompactWidth)
+    public void PositionAtRightEdge()
     {
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Right - targetWidth;
+        Left = workArea.Right - Width;
         if (double.IsNaN(Top) || Top <= 0)
         {
-            Top = (workArea.Height - Height) / 2.0;
+            Top = workArea.Top + (workArea.Height - Height) / 2.0;
         }
+    }
+
+    public void ResetPositionAtRightEdge()
+    {
+        var workArea = SystemParameters.WorkArea;
+        Top = workArea.Top + (workArea.Height - Height) / 2.0;
+        Left = workArea.Right - Width;
     }
 
     private void NotchWindow_MouseDown(object sender, MouseButtonEventArgs e)
@@ -151,9 +162,7 @@ public partial class NotchWindow : Window
 
     private void NotchWindow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        var workArea = SystemParameters.WorkArea;
-        Top = (workArea.Height - Height) / 2.0;
-        Left = workArea.Right - Width;
+        ResetPositionAtRightEdge();
     }
 
     private void NotchWindow_MouseEnter(object sender, WpfMouseEventArgs e)
@@ -254,7 +263,7 @@ public partial class NotchWindow : Window
                     BeginAnimation(HeightProperty, null);
                     BeginAnimation(LeftProperty, null);
                     Width = CompactWidth;
-                    Height = CompactHeight;
+                    Height = targetHeight;
                     Left = workArea.Right - CompactWidth;
                     ExpandedContent.Opacity = 0;
                     ExpandedScale.ScaleX = 0.96;
@@ -307,7 +316,7 @@ public partial class NotchWindow : Window
                 SelectRecord(snapshot[0]);
             }
 
-            TxtLastUpdated.Text = $"{DateTime.Now:tt h:mm:ss} 갱신됨";
+            TxtLastUpdated.Text = $"{DateTime.Now:tt h:mm} 갱신됨";
         });
     }
 
@@ -516,11 +525,33 @@ public partial class NotchWindow : Window
         }
     }
 
+    public void SetPinned(bool pinned)
+    {
+        if (_isPinned == pinned) return;
+
+        _isPinned = pinned;
+        UpdatePinButton();
+        _expandTimer.Stop();
+        _collapseTimer.Stop();
+
+        if (pinned)
+            AnimateExpansion(true);
+        else if (!IsMouseOver)
+            _collapseTimer.Start();
+    }
+
+    private void UpdatePinButton()
+    {
+        BtnPin.Content = _isPinned ? "고정됨" : "고정";
+        BtnPin.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(
+            _isPinned ? "#2563EB" : "#292D36"));
+        BtnPin.Foreground = _isPinned ? Brushes.White : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8EBF0"));
+    }
+
     private void BtnPin_Click(object sender, RoutedEventArgs e)
     {
-        _isPinned = !_isPinned;
-        BtnPin.Foreground = _isPinned ? Brushes.SkyBlue : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6B7280"));
-        BtnPin.Content = _isPinned ? "📌 고정됨" : "📌 고정";
+        SetPinned(!_isPinned);
+        _usageManager.SetPreferences(_isPinned, _usageManager.AlertsEnabled);
     }
 
     private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
