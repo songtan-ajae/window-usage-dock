@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using Codenotch.Core.Services;
 using WpfCheckBox = System.Windows.Controls.CheckBox;
 using WpfTextBlock = System.Windows.Controls.TextBlock;
@@ -18,19 +20,37 @@ public partial class SettingsWindow : Window
     public SettingsWindow(UsageManager usageManager, NotchWindow notchWindow)
     {
         InitializeComponent();
+        MaxHeight = Math.Max(450, SystemParameters.WorkArea.Height - 24);
+        Height = Math.Min(Height, MaxHeight);
         _usageManager = usageManager;
         _notchWindow = notchWindow;
+        ChkAlwaysShow.IsChecked = _usageManager.AlwaysExpanded;
+        ChkAlerts.IsChecked = _usageManager.AlertsEnabled;
 
         BuildProviderSelector();
+        SourceInitialized += SettingsWindow_SourceInitialized;
         Loaded += SettingsWindow_Loaded;
         Closed += SettingsWindow_Closed;
     }
 
     private void BtnResetPos_Click(object sender, RoutedEventArgs e)
     {
-        _notchWindow.PositionAtRightEdge();
+        _notchWindow.ResetPositionAtRightEdge();
         _notchWindow.Show();
     }
+
+    private void SettingsWindow_SourceInitialized(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var enabled = 1;
+        const int darkModeAttribute = 20;
+        const int legacyDarkModeAttribute = 19;
+        if (DwmSetWindowAttribute(hwnd, darkModeAttribute, ref enabled, sizeof(int)) != 0)
+            DwmSetWindowAttribute(hwnd, legacyDarkModeAttribute, ref enabled, sizeof(int));
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int valueSize);
 
     private void BuildProviderSelector()
     {
@@ -40,7 +60,8 @@ public partial class SettingsWindow : Window
             var statusLabel = new WpfTextBlock
             {
                 FontSize = 10,
-                Foreground = System.Windows.Media.Brushes.Gray,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#AFC1D6")),
                 Margin = new Thickness(30, 1, 0, 0),
                 Text = "실행 감지 대기"
             };
@@ -49,13 +70,14 @@ public partial class SettingsWindow : Window
             content.Children.Add(statusLabel);
             var checkBox = new WpfCheckBox
             {
+                Style = (Style)FindResource("DockCheckBox"),
                 Content = content,
                 IsChecked = selectedIds.Contains(provider.Id),
                 Foreground = System.Windows.Media.Brushes.White,
                 FontSize = 12,
-                Margin = new Thickness(0, 4, 0, 4),
-                Padding = new Thickness(8, 6, 8, 6),
-                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#16161B"))
+                Margin = new Thickness(0, 3, 0, 3),
+                Padding = new Thickness(10, 7, 10, 7),
+                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#6B34485E"))
             };
             checkBox.Checked += ProviderSelectionChanged;
             checkBox.Unchecked += ProviderSelectionChanged;
@@ -92,19 +114,22 @@ public partial class SettingsWindow : Window
             if (!byId.TryGetValue(providerId, out var record))
             {
                 label.Text = "실행 감지 대기";
-                label.Foreground = System.Windows.Media.Brushes.Gray;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#AFC1D6"));
                 continue;
             }
 
             if (record.IsConnected)
             {
                 label.Text = $"감지됨 · {record.PrimaryRemainingPercentage:F0}% 남음 ({record.PrimaryUsedPercentage:F0}% 사용)";
-                label.Foreground = System.Windows.Media.Brushes.SkyBlue;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#8DC5FF"));
             }
             else
             {
                 label.Text = $"감지됨 · {record.PrimaryStatusText}";
-                label.Foreground = System.Windows.Media.Brushes.Orange;
+                label.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F9B875"));
             }
         }
     }
@@ -142,6 +167,8 @@ public partial class SettingsWindow : Window
         }
 
         _usageManager.SetSelectedProviderIds(selectedIds);
+        _usageManager.SetPreferences(ChkAlwaysShow.IsChecked == true, ChkAlerts.IsChecked == true);
+        _notchWindow.SetPinned(ChkAlwaysShow.IsChecked == true);
         await _usageManager.RefreshAllAsync();
         Close();
     }

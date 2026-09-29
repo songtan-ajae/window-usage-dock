@@ -18,6 +18,34 @@
         Width="40" Height="136">
 
     <Window.Resources>
+        <Style x:Key="DockActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#292D36" />
+            <Setter Property="Foreground" Value="#E8EBF0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonSurface" Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="#39404D" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="#465163" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="ToolTip">
             <Setter Property="Background" Value="#F02B2B30" />
             <Setter Property="Foreground" Value="#EEEEEE" />
@@ -31,7 +59,7 @@
     <!-- Outer Window Container (Right-edge docked) -->
     <Grid HorizontalAlignment="Right" VerticalAlignment="Top">
         <!-- Physical Notch Body: Right flush (flat), Left rounded (16, 0, 0, 16) -->
-        <Border x:Name="NotchBody" Background="#E61B1B1F" BorderBrush="#42FFFFFF" BorderThickness="1,1,0,1"
+        <Border x:Name="NotchBody" Background="#FA1B1D23" BorderBrush="#42FFFFFF" BorderThickness="1,1,0,1"
                 CornerRadius="16,0,0,16" SnapsToDevicePixels="True" Cursor="SizeNS">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" Color="#000000" Opacity="0.22" ShadowDepth="2" Direction="180" />
@@ -56,7 +84,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Full Details Panel -->
-                    <Grid Grid.Column="0" Margin="16,12,12,12">
+                    <Grid Grid.Column="0" Margin="16,14,12,14">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -79,14 +107,14 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="TxtPrimaryLabel" Text="5시간 사용 제한" FontSize="10.5" FontWeight="SemiBold" Foreground="#D1D5DB" />
-                                <TextBlock x:Name="TxtPrimaryReset" Grid.Column="1" Text="2시간 40분 후 갱신" FontSize="10" Foreground="#9CA3AF" />
+                                <TextBlock x:Name="TxtPrimaryLabel" Text="5시간 사용 제한" FontSize="11" FontWeight="SemiBold" Foreground="#E0E4EB" />
+                                <TextBlock x:Name="TxtPrimaryReset" Grid.Column="1" Text="2시간 40분 후 갱신" FontSize="11" Foreground="#B8C0CC" />
                             </Grid>
                             <Grid x:Name="PrimaryBarContainer" Height="5.5" SnapsToDevicePixels="True" Margin="0,2,0,3">
                                 <Border Background="#1E1E26" CornerRadius="3" />
                                 <Border x:Name="PrimaryBarFill" Background="#10A37F" CornerRadius="3" HorizontalAlignment="Left" Width="100" />
                             </Grid>
-                            <TextBlock x:Name="TxtPrimaryUsage" Text="33% 남음 · 67% 사용됨" FontSize="10.5" Foreground="#A1A1AA" Margin="0,0,0,8" />
+                            <TextBlock x:Name="TxtPrimaryUsage" Text="33% 남음 · 67% 사용됨" FontSize="11" Foreground="#C5CBD5" Margin="0,0,0,8" />
 
                             <!-- 2. 주간 사용 제한 섹션 (함께 전부 다 표시!) -->
                             <Grid x:Name="SecondarySection" Margin="0,0,0,2">
@@ -100,33 +128,33 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="TxtSecondaryLabel" Text="주간 사용 제한" FontSize="10.5" FontWeight="SemiBold" Foreground="#D1D5DB" />
-                                    <TextBlock x:Name="TxtSecondaryReset" Grid.Column="1" Text="4일 후 갱신" FontSize="10" Foreground="#9CA3AF" />
+                                    <TextBlock x:Name="TxtSecondaryLabel" Text="주간 사용 제한" FontSize="11" FontWeight="SemiBold" Foreground="#E0E4EB" />
+                                    <TextBlock x:Name="TxtSecondaryReset" Grid.Column="1" Text="4일 후 갱신" FontSize="11" Foreground="#B8C0CC" />
                                 </Grid>
                                 <Grid x:Name="SecondaryBarContainer" Grid.Row="1" Height="5.5" SnapsToDevicePixels="True" Margin="0,2,0,3">
                                     <Border Background="#1E1E26" CornerRadius="3" />
                                     <Border x:Name="SecondaryBarFill" Background="#10A37F" CornerRadius="3" HorizontalAlignment="Left" Width="120" />
                                 </Grid>
-                                <TextBlock x:Name="TxtSecondaryUsage" Grid.Row="2" Text="57% 남음 · 43% 사용됨" FontSize="10.5" Foreground="#A1A1AA" />
+                                <TextBlock x:Name="TxtSecondaryUsage" Grid.Row="2" Text="57% 남음 · 43% 사용됨" FontSize="11" Foreground="#C5CBD5" />
                             </Grid>
                         </StackPanel>
 
                         <!-- Bottom Action Buttons -->
-                        <Grid Grid.Row="2" Margin="0,4,0,0">
+                        <Grid Grid.Row="2" Margin="0,8,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock x:Name="TxtLastUpdated" Text="방금 갱신됨" FontSize="9.5" Foreground="#6B7280" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtLastUpdated" Text="방금 갱신됨" FontSize="10.5" Foreground="#B8C0CC" VerticalAlignment="Center" />
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <Button x:Name="BtnRefresh" Content="🔄 새로고침" Padding="6,3" Margin="2,0" FontSize="10"
-                                        Background="#14141A" Foreground="#D1D5DB" BorderThickness="0" ToolTip="지금 바로 새로고침" Click="BtnRefresh_Click" Cursor="Hand" />
-                                <Button x:Name="BtnPin" Content="📌 고정" Padding="6,3" Margin="2,0" FontSize="10"
-                                        Background="#14141A" Foreground="#6B7280" BorderThickness="0" ToolTip="노치 항상 펼쳐두기" Click="BtnPin_Click" Cursor="Hand" />
-                                <Button x:Name="BtnSettings" Content="⚙ 설정" Padding="6,3" Margin="2,0" FontSize="10"
-                                        Background="#14141A" Foreground="#D1D5DB" BorderThickness="0" ToolTip="환경설정 열기" Click="BtnSettings_Click" Cursor="Hand" />
+                                <Button x:Name="BtnRefresh" Content="새로고침" Style="{StaticResource DockActionButton}"
+                                        ToolTip="지금 바로 새로고침" Click="BtnRefresh_Click" />
+                                <Button x:Name="BtnPin" Content="고정" Style="{StaticResource DockActionButton}"
+                                        ToolTip="노치 항상 펼쳐두기" Click="BtnPin_Click" />
+                                <Button x:Name="BtnSettings" Content="설정" Style="{StaticResource DockActionButton}"
+                                        ToolTip="환경설정 열기" Click="BtnSettings_Click" />
                             </StackPanel>
                         </Grid>
                     </Grid>

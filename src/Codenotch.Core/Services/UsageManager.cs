@@ -16,6 +16,7 @@ public class UsageManager : IDisposable
     private readonly HashSet<string> _selectedProviderIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _selectionGate = new();
     private readonly bool _persistSettings;
+    private readonly DockSettings _settings;
     private readonly Timer _pollTimer;
     private readonly HashSet<string> _notifiedCrossings = new();
     private int _isRefreshing;
@@ -44,6 +45,16 @@ public class UsageManager : IDisposable
         }
     }
 
+    public bool AlwaysExpanded
+    {
+        get { lock (_selectionGate) return _settings.AlwaysExpanded; }
+    }
+
+    public bool AlertsEnabled
+    {
+        get { lock (_selectionGate) return _settings.AlertsEnabled; }
+    }
+
     public UsageManager()
         : this(new IUsageProvider[]
         {
@@ -60,7 +71,8 @@ public class UsageManager : IDisposable
     {
         _providers.AddRange(providers);
         _persistSettings = persistSettings;
-        InitializeSelectedProviders(persistSettings ? DockSettingsStore.Load().SelectedProviderIds : Array.Empty<string>());
+        _settings = persistSettings ? DockSettingsStore.Load() : new DockSettings();
+        InitializeSelectedProviders(_settings.SelectedProviderIds);
 
         _pollTimer = new Timer(
             async _ => await RefreshAllAsync(),
@@ -122,10 +134,26 @@ public class UsageManager : IDisposable
             _selectedProviderIds.Clear();
             foreach (var providerId in selected)
                 _selectedProviderIds.Add(providerId);
+            SaveSettings();
         }
+    }
 
-        if (_persistSettings)
-            DockSettingsStore.Save(selected);
+    public void SetPreferences(bool alwaysExpanded, bool alertsEnabled)
+    {
+        lock (_selectionGate)
+        {
+            _settings.AlwaysExpanded = alwaysExpanded;
+            _settings.AlertsEnabled = alertsEnabled;
+            SaveSettings();
+        }
+    }
+
+    private void SaveSettings()
+    {
+        if (!_persistSettings) return;
+
+        _settings.SelectedProviderIds = _selectedProviderIds.ToList();
+        DockSettingsStore.Save(_settings);
     }
 
     private void InitializeSelectedProviders(IEnumerable<string> providerIds)
@@ -150,6 +178,8 @@ public class UsageManager : IDisposable
 
     private void CheckThresholds(UsageRecord record)
     {
+        if (!AlertsEnabled) return;
+
         var key80 = $"{record.ProviderId}_80";
         var key100 = $"{record.ProviderId}_100";
 
