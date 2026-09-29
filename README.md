@@ -29,9 +29,6 @@ Windows 데스크톱에서 여러 AI 코딩 도구의 사용량과 세션 상태
 - Cursor
 - GitHub Copilot
 - Google Antigravity
-- xAI Grok
-- Ollama
-- OpenCode, Command Code, GLM(Z.ai) 및 기타 provider
 
 provider별로 읽을 수 있는 quota와 세션 정보는 설치 상태와 로컬 설정 형식에 따라 달라질 수 있습니다.
 
@@ -41,7 +38,7 @@ provider별로 읽을 수 있는 quota와 세션 정보는 설치 상태와 로�
 
 최신 Windows x64 패키지를 내려받아 압축을 풀고 `WindowsUsageDock.exe`를 실행합니다.
 
-[Windows Usage Dock win-x64 패키지 다운로드](dist/WindowsUsageDock-win-x64.zip)
+[Windows Usage Dock 최신 win-x64 패키지 다운로드](https://github.com/songtan-ajae/window-usage-dock/releases/latest)
 
 이 패키지는 self-contained single-file publish 결과물이라 별도의 .NET 런타임 설치가 필요하지 않습니다.
 
